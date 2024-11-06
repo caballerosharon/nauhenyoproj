@@ -80,7 +80,8 @@ export default {
     return {
       menuItems: [
       { name: 'Dashboard', to: '/dashboard', icon: 'fas fa-home', current: true },
-      { name: 'Report Incident', to: '/report', icon: 'fas fa-chart-bar', current: false },
+      { name: 'Report Crime', to: '/reportcrime', icon: 'fas fa-shield-alt', current: false },
+      { name: 'Report Fire Incident', to: '/reportfire', icon: 'fas fa-fire', current: false },
       { name: 'My Reports', to: '/history', icon: 'fas fa-folder', current: false },
       { name: 'Map', to: '/usermap', icon: 'fas fa-users', current: false },
       { name: 'Message', to: '/', icon: 'fas fa-folder', current: false },
@@ -106,18 +107,21 @@ export default {
   display: flex;
   height: 100vh;
   font-family: 'Poppins', sans-serif;
+  margin:0%;
 }
 
 .sidebar {
   width: 250px;
   background-color: #002855;
   color: #ecf0f1;
+  padding-top: 0%;
 }
 
 .sidebar-header {
   padding: 20px;
   display: flex;
   align-items: center;
+  margin-top: 0%;
 }
 
 .sidebar-header .logo {
@@ -161,12 +165,14 @@ export default {
   flex: 1;
   overflow-y: auto;
   background-color: #ecf0f1;
+  padding-top: 0%;
 }
 
 .main-header {
   background-color: #ffffff;
   padding: 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-top: 0%;
 }
 
 .main-header h1 {

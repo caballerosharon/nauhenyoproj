@@ -96,9 +96,9 @@ export default {
   data() {
     return {
       menuItems: [
-      { name: 'Dashboard', to: '/dashboard', icon: 'fas fa-home', current: true },
+      { name: 'Dashboard', to: '/dashboard', icon: 'fas fa-home', current: false },
       { name: 'Report Incident', to: '/report', icon: 'fas fa-chart-bar', current: false },
-      { name: 'My Reports', to: '/history', icon: 'fas fa-folder', current: false },
+      { name: 'My Reports', to: '/history', icon: 'fas fa-folder', current: true },
       { name: 'Map', to: '/usermap', icon: 'fas fa-users', current: false },
       { name: 'Message', to: '/', icon: 'fas fa-folder', current: false },
       { name: 'Profile', to: '/', icon: 'fas fa-users', current: false },
