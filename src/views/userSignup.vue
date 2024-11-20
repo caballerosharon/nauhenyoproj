@@ -46,6 +46,11 @@
       </div>
 
       <div class="form-group">
+        <label for="email">Email</label>
+        <input id="email" v-model="form.email" type="email" required>
+      </div>
+
+      <div class="form-group">
         <label for="password">Password</label>
         <div class="password-input">
           <input 
@@ -62,6 +67,10 @@
       </div>
 
       <button type="submit" class="submit-button">Sign Up</button>
+
+      <div v-if="error" class="error-message">
+        {{ error }}
+      </div>
     </form>
 
     <div v-if="showMap" class="modal">
@@ -75,6 +84,22 @@
         </div>
       </div>
     </div>
+
+    <!-- Sign-up Progress Modal -->
+    <div v-if="isSigningUp" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
+        <h2 class="text-2xl font-bold mb-4 text-center">Signing Up</h2>
+        <div class="mb-4">
+          <div class="h-2 bg-gray-200 rounded-full">
+            <div
+              class="h-full bg-blue-600 rounded-full transition-all duration-500 ease-out"
+              :style="{ width: `${signupProgress}%` }"
+            ></div>
+          </div>
+        </div>
+        <p class="text-center text-gray-600">{{ signupStatus }}</p>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -82,6 +107,9 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { MapPinIcon, EyeIcon, EyeOffIcon, XIcon } from 'lucide-vue-next';
+import { auth, db } from '@/firebase/config';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 
 const router = useRouter();
 const form = ref({
@@ -90,28 +118,69 @@ const form = ref({
   gender: '',
   contactNumber: '',
   address: '',
+  email: '',
   password: ''
 });
 
 const showPassword = ref(false);
 const showMap = ref(false);
+const error = ref('');
+const isSigningUp = ref(false);
+const signupProgress = ref(0);
+const signupStatus = ref('');
 
-const handleSubmit = () => {
-  console.log('Form submitted:', form.value);
+const handleSubmit = async () => {
+  isSigningUp.value = true;
+  signupProgress.value = 0;
+  signupStatus.value = 'Creating your account...';
+  error.value = '';
 
-  router.push('/login');
+  try {
+    // Create user with email and password
+    signupProgress.value = 25;
+    const userCredential = await createUserWithEmailAndPassword(auth, form.value.email, form.value.password);
+    const user = userCredential.user;
+
+    signupProgress.value = 50;
+    signupStatus.value = 'Account created. Saving your details...';
+
+    // Store additional user details in Firestore
+    await setDoc(doc(db, 'users', user.uid), {
+      fullname: form.value.fullname,
+      birthday: form.value.birthday,
+      gender: form.value.gender,
+      contactNumber: form.value.contactNumber,
+      address: form.value.address,
+      email: form.value.email
+    });
+
+    signupProgress.value = 100;
+    signupStatus.value = 'Sign up successful!';
+
+    console.log('User signed up successfully');
+    
+    // Delay to show the completed progress bar
+    setTimeout(() => {
+      isSigningUp.value = false;
+      router.push('/login');
+    }, 1000);
+
+  } catch (e) {
+    console.error('Error during signup:', e);
+    error.value = 'An error occurred during sign up. Please try again later.';
+    isSigningUp.value = false;
+    signupProgress.value = 0;
+    signupStatus.value = '';
+  }
 };
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap'); /* Import Poppins font */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
 
 * {
-  font-family: 'Poppins', sans-serif; /* Apply Poppins font to all elements */
+  font-family: 'Poppins', sans-serif;
 }
-
-/* Apply the background color to the entire viewport */
-
 
 .signup-container {
   max-width: 500px;
@@ -125,15 +194,15 @@ const handleSubmit = () => {
 }
 
 .logo {
-  width: 100px; /* Adjust logo size as needed */
+  width: 100px;
 }
 
 .signup-form {
-  background-color: rgba(249, 249, 249, 0.9); /* Semi-transparent form background */
-  padding: 30px; /* Increased padding for more space inside the form */
+  background-color: rgba(249, 249, 249, 0.9);
+  padding: 30px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  text-align: left; /* Align text inside the form to the left */
+  text-align: left;
 }
 
 h1 {
@@ -246,5 +315,11 @@ input, select {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+}
+
+.error-message {
+  color: red;
+  margin-top: 10px;
+  text-align: center;
 }
 </style>

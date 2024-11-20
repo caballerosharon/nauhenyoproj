@@ -7,7 +7,21 @@ import UserReportHistory from '../views/UserReportHistory.vue';
 import userSignup from '../views/userSignup.vue';
 import LoginUser from '../views/LoginUser.vue';
 import userProfile from '../views/userProfile.vue';
-
+import npsDashboard from '../views/npsDashboard.vue';
+import npsReports from '../views/npsReports.vue';
+import npsHistory from '../views/npsHistory.vue';
+import bfpDashboard from '../views/bfpDashboard.vue';
+import bfpReports from '../views/bfpReports.vue';
+import bfpHistory from '../views/bfpHistory.vue';
+import NPSLogin from '../views/NPSLogin.vue';
+import BFPLogin from '../views/BFPLogin.vue';
+import AdminRoleSelector from '../views/AdminRoleSelector.vue';
+import tryLang from '../views/tryLang.vue';
+import trialMuna from '../views/trialMuna.vue';
+import firemanSignup from '../views/firemanSignup.vue';
+import firemanLogin from '../views/firemanLogin.vue';
+import bfpMap from '../views/bfpMap.vue';
+import landingPage from '../views/landingPage.vue';
 
 
 const routes = [
@@ -19,11 +33,32 @@ const routes = [
   { path: '/usermap', name: 'UserMap', component: UserMap }, 
   { path: '/history', name: 'UserReportHistory', component: UserReportHistory },
   { path: '/profile', name: 'userProfile', component: userProfile }, 
+  { path: '/npsdashboard', name: 'npsDashboard', component: npsDashboard },
+  { path: '/npsreports', name: 'npsReports', component: npsReports },
+  { path: '/npshistory', name: 'npsHistory', component: npsHistory },
+  { path: '/nauhenyo', name: 'landingPage', component: landingPage },
+
+
+  { path: '/bfplogin', name: 'BFPLogin', component: BFPLogin },
+  { path: '/bfpmap', name: 'bfpMap', component: bfpMap },
+  { path: '/bfpdashboard', name: 'bfpDashboard', component: bfpDashboard },
+  { path: '/bfpreports', name: 'bfpReports', component: bfpReports },
+  { path: '/bfphistory', name: 'bfpHistory', component: bfpHistory },
+  { path: '/npslogin', name: 'NPSLogin', component: NPSLogin },
+  { path: '/role', name: 'AdminRoleSelector', component: AdminRoleSelector },
+  { path: '/try', name: 'tryLang', component: tryLang },
+  { path: '/trial', name: 'trialMuna', component: trialMuna },
+  { path: '/firemansignup', name: 'firemanSignup', component: firemanSignup },
+  { path: '/firemanlogin', name: 'firemanLogin', component: firemanLogin },
 ];
 
-const router = createRouter({
-  history: createWebHistory(),
-  routes,
-});
+
+  
+  const router = createRouter({
+    history: createWebHistory(),
+    routes,
+  });
+  
+
 
 export default router;
