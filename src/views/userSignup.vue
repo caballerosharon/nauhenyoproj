@@ -1,103 +1,166 @@
 <template>
-  <div class="signup-container">
-    <!-- Logo Image at the top center -->
-    <div class="logo-container">
-      <img src="@/assets/naulogo.png" alt="Logo" class="logo">
+  <div class="min-h-screen flex flex-col md:flex-row">
+    <!-- Left side with form -->
+    <div class="w-full md:w-1/2 bg-white flex items-center justify-center p-4 md:p-8">
+      <div class="w-full max-w-md">
+        <form @submit.prevent="handleSubmit" class="space-y-6">
+          <h1 class="text-2xl md:text-3xl font-bold text-gray-900 mb-8">Sign Up</h1>
+
+          <div class="space-y-4">
+            <div class="flex flex-col">
+              <label for="fullname" class="text-sm text-gray-500 mb-1 text-left">Full Name</label>
+              <input 
+                id="fullname" 
+                v-model="form.fullname" 
+                type="text" 
+                required
+                class="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-[#062654] focus:border-[#062654]"
+              >
+            </div>
+
+            <div class="flex flex-col">
+              <label for="birthday" class="text-sm text-gray-500 mb-1 text-left">Birthday</label>
+              <input 
+                id="birthday" 
+                v-model="form.birthday" 
+                type="date" 
+                required
+                class="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-[#062654] focus:border-[#062654]"
+              >
+            </div>
+
+            <div class="flex gap-4">
+              <div class="flex flex-col w-1/2">
+                <label for="gender" class="text-sm text-gray-500 mb-1 text-left">Gender</label>
+                <select 
+                  id="gender" 
+                  v-model="form.gender" 
+                  required
+                  class="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-[#062654] focus:border-[#062654]"
+                >
+                  <option value="">Select Gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              <div class="flex flex-col w-1/2">
+                <label for="contactNumber" class="text-sm text-gray-500 mb-1 text-left">Contact Number</label>
+                <input 
+                  id="contactNumber" 
+                  v-model="form.contactNumber" 
+                  type="tel" 
+                  required
+                  class="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-[#062654] focus:border-[#062654]"
+                >
+              </div>
+            </div>
+
+            <div class="flex flex-col">
+              <label for="address" class="text-sm text-gray-500 mb-1 text-left">Address</label>
+              <div class="relative">
+                <input 
+                  id="address" 
+                  v-model="form.address" 
+                  type="text" 
+                  required
+                  class="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-[#062654] focus:border-[#062654]"
+                >
+                <button 
+                  type="button" 
+                  @click="showMap = true"
+                  class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                >
+                  <MapPinIcon class="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            <div class="flex flex-col">
+              <label for="email" class="text-sm text-gray-500 mb-1 text-left">Email</label>
+              <input 
+                id="email" 
+                v-model="form.email" 
+                type="email" 
+                required
+                class="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-[#062654] focus:border-[#062654]"
+              >
+            </div>
+
+            <div class="flex flex-col">
+              <label for="password" class="text-sm text-gray-500 mb-1 text-left">Password</label>
+              <div class="relative">
+                <input 
+                  id="password" 
+                  v-model="form.password" 
+                  :type="showPassword ? 'text' : 'password'" 
+                  required
+                  class="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-[#062654] focus:border-[#062654]"
+                >
+                <button 
+                  type="button" 
+                  @click="showPassword = !showPassword"
+                  class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                >
+                  <EyeIcon v-if="!showPassword" class="h-5 w-5" />
+                  <EyeOffIcon v-else class="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button 
+            type="submit" 
+            class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-[#062654] hover:bg-[#083472] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#062654] transition-colors"
+          >
+            Sign Up
+          </button>
+
+          <div v-if="error" class="text-red-600 text-center text-sm">
+            {{ error }}
+          </div>
+        </form>
+      </div>
     </div>
 
-    <!-- Form with the title inside -->
-    <form @submit.prevent="handleSubmit" class="signup-form">
-      <h1>Sign Up</h1>
-      <div class="form-group">
-        <label for="fullname">Full Name</label>
-        <input id="fullname" v-model="form.fullname" type="text" required>
-      </div>
+    <!-- Right side with logo -->
+    <div class="w-full md:w-1/2 bg-[#062654] flex items-center justify-center p-8 md:fixed md:top-0 md:right-0 md:bottom-0">
+      <img src="@/assets/naulogo.png" alt="Nauhenyo Logo" class="w-48 md:w-64 lg:w-96 h-auto">
+    </div>
 
-      <div class="form-group">
-        <label for="birthday">Birthday</label>
-        <input id="birthday" v-model="form.birthday" type="date" required>
-      </div>
-
-      <div class="form-row">
-        <div class="form-group half-width">
-          <label for="gender">Gender</label>
-          <select id="gender" v-model="form.gender" required>
-            <option value="">Select Gender</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-
-        <div class="form-group half-width">
-          <label for="contactNumber">Contact Number</label>
-          <input id="contactNumber" v-model="form.contactNumber" type="tel" required>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label for="address">Address</label>
-        <div class="address-input">
-          <input id="address" v-model="form.address" type="text" required>
-          <button type="button" @click="showMap = true" class="map-button">
-            <MapPinIcon />
+    <!-- Map Modal -->
+    <div v-if="showMap" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+      <div class="bg-white rounded-lg p-6 max-w-3xl w-full shadow-xl">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-semibold">Select Location in the Philippines</h2>
+          <button @click="showMap = false" class="text-gray-500 hover:text-gray-700">
+            <XIcon class="h-6 w-6" />
           </button>
         </div>
-      </div>
-
-      <div class="form-group">
-        <label for="email">Email</label>
-        <input id="email" v-model="form.email" type="email" required>
-      </div>
-
-      <div class="form-group">
-        <label for="password">Password</label>
-        <div class="password-input">
-          <input 
-            id="password" 
-            v-model="form.password" 
-            :type="showPassword ? 'text' : 'password'" 
-            required
+        <div class="aspect-video bg-gray-100 rounded-lg overflow-hidden">
+          <img 
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Blank_map_of_the_Philippines.svg/800px-Blank_map_of_the_Philippines.svg.png" 
+            alt="Map of the Philippines"
+            class="w-full h-full object-contain"
           >
-          <button type="button" @click="showPassword = !showPassword" class="toggle-password">
-            <EyeIcon v-if="!showPassword" />
-            <EyeOffIcon v-else />
-          </button>
-        </div>
-      </div>
-
-      <button type="submit" class="submit-button">Sign Up</button>
-
-      <div v-if="error" class="error-message">
-        {{ error }}
-      </div>
-    </form>
-
-    <div v-if="showMap" class="modal">
-      <div class="modal-content">
-        <button @click="showMap = false" class="close-button">
-          <XIcon />
-        </button>
-        <h2>Select Location in the Philippines</h2>
-        <div class="map-placeholder">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Blank_map_of_the_Philippines.svg/800px-Blank_map_of_the_Philippines.svg.png" alt="Map of the Philippines">
         </div>
       </div>
     </div>
 
     <!-- Sign-up Progress Modal -->
-    <div v-if="isSigningUp" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white p-8 rounded-lg shadow-xl max-w-md w-full">
-        <h2 class="text-2xl font-bold mb-4 text-center">Signing Up</h2>
-        <div class="mb-4">
-          <div class="h-2 bg-gray-200 rounded-full">
-            <div
-              class="h-full bg-blue-600 rounded-full transition-all duration-500 ease-out"
+    <div v-if="isSigningUp" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
+      <div class="bg-white rounded-lg p-8 max-w-sm w-full shadow-xl">
+        <h2 class="text-xl font-semibold mb-6 text-center">Signing Up</h2>
+        <div class="relative">
+          <div class="overflow-hidden h-2 rounded-full bg-gray-100">
+            <div 
+              class="h-full rounded-full bg-gradient-to-r from-[#062654] via-[#083472] to-[#062654] animate-gradient transition-all duration-500 ease-out bg-[length:200%_100%]"
               :style="{ width: `${signupProgress}%` }"
             ></div>
           </div>
         </div>
-        <p class="text-center text-gray-600">{{ signupStatus }}</p>
+        <p class="mt-4 text-center text-gray-600">{{ signupStatus }}</p>
       </div>
     </div>
   </div>
@@ -175,151 +238,14 @@ const handleSubmit = async () => {
 };
 </script>
 
-<style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
-
-* {
-  font-family: 'Poppins', sans-serif;
+<style>
+@keyframes gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
-.signup-container {
-  max-width: 500px;
-  margin: 0 auto;
-  padding: 20px;
-  text-align: center;
-}
-
-.logo-container {
-  margin-bottom: 20px;
-}
-
-.logo {
-  width: 100px;
-}
-
-.signup-form {
-  background-color: rgba(249, 249, 249, 0.9);
-  padding: 30px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  text-align: left;
-}
-
-h1 {
-  color: #333;
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-.form-group {
-  margin-bottom: 15px;
-}
-
-.form-row {
-  display: flex;
-  gap: 15px;
-}
-
-.half-width {
-  flex: 1;
-}
-
-label {
-  display: block;
-  margin-bottom: 5px;
-  color: #555;
-  text-align: left;
-}
-
-input, select {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 16px;
-}
-
-.address-input, .password-input {
-  position: relative;
-}
-
-.map-button, .toggle-password {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #555;
-}
-
-.submit-button {
-  width: 100%;
-  padding: 10px;
-  background-color: #062654;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.submit-button:hover {
-  background-color: #f58e08;
-}
-
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.modal-content {
-  background-color: white;
-  padding: 20px;
-  border-radius: 8px;
-  max-width: 80%;
-  max-height: 80%;
-  overflow: auto;
-  position: relative;
-}
-
-.close-button {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 20px;
-}
-
-.map-placeholder {
-  width: 100%;
-  height: 400px;
-  background-color: #f0f0f0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.map-placeholder img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-}
-
-.error-message {
-  color: red;
-  margin-top: 10px;
-  text-align: center;
+.animate-gradient {
+  animation: gradient 3s ease infinite;
 }
 </style>

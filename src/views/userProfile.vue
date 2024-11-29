@@ -48,7 +48,7 @@
                 <div class="flex items-center justify-between py-4 hover:bg-gray-50 -mx-6 px-6 cursor-pointer" @click="editField('name')">
                   <div>
                     <span class="text-sm text-gray-500">Name</span>
-                    <p class="text-sm text-gray-900">{{ userProfile.displayName || 'Add name' }}</p>
+                    <p class="text-sm text-gray-900">{{ userProfile.displayName || 'Edit name' }}</p>
                   </div>
                   <ChevronRight class="w-5 h-5 text-gray-400" />
                 </div>

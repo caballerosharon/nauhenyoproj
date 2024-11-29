@@ -129,7 +129,7 @@ import {
   FileText, 
   History, 
   BarChart2, 
-  User,
+  /*User*/
   Menu,
   ChevronLeft,
   Bell,
@@ -160,7 +160,7 @@ const navigationItems = [
   { name: 'Fire Reports', icon: FileText, path: '/bfpreports', active: false },
   { name: 'Incident History', icon: History, path: '/bfphistory', active: false },
   { name: 'Fire Analytics', icon: BarChart2, path: '/bfpmap', active: false },
-  { name: 'Account', icon: User, path: '/account', active: false },
+//  { name: 'Account', icon: User, path: '/account', active: false },
 ];
 
 const convertLocationToCoordinates = (location) => {

@@ -12,7 +12,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path>
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path>
           </svg>
-          <span v-if="!isSidebarCollapsed" class="ml-2 text-white font-semibold">BFP Admin</span>
+          <span v-if="!isSidebarCollapsed" class="ml-2 text-white font-semibold">BFP</span>
         </div>
       </div>
 
@@ -43,7 +43,7 @@
             <Menu v-if="isSidebarCollapsed" class="h-6 w-6" />
             <ChevronLeft v-else class="h-6 w-6" />
           </button>
-          <h1 class="text-xl font-semibold">BFP Admin Dashboard</h1>
+          <h1 class="text-xl font-semibold">Firefighter Dashboard</h1>
         </div>
         <div class="flex items-center space-x-4 relative">
           <!-- Notification Bell -->
@@ -93,74 +93,25 @@
       <!-- Scrollable content -->
       <div class="flex-1 overflow-y-auto p-8">
         <!-- Metrics Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
           <div v-for="metric in metrics" :key="metric.title" 
-               class="bg-white p-6 rounded-xl shadow">
-            <div class="flex items-start justify-between">
+               class="bg-white bg-opacity-80 p-8 rounded-2xl shadow-lg backdrop-blur-sm transition-all duration-300 hover:bg-opacity-100">
+            <div class="flex items-center justify-between">
               <div>
-                <p class="text-gray-500 text-sm">{{ metric.title }}</p>
-                <h3 class="text-2xl font-bold mt-1 text-[#002855]">{{ metric.value }}</h3>
+                <p class="text-gray-500 text-lg mb-2">{{ metric.title }}</p>
+                <h3 class="text-4xl font-bold text-[#002855]">{{ metric.value }}</h3>
               </div>
               <component :is="metric.icon" 
-                        class="w-8 h-8 text-[#002855]" />
+                        class="w-16 h-16 text-[#002855] opacity-20" />
             </div>
           </div>
         </div>
 
-        <!-- Charts Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <div v-if="incidentTypesData.labels && incidentTypesData.datasets.length" class="bg-white p-6 rounded-xl shadow">
-            <h3 class="text-lg font-semibold mb-4 text-[#002855]">Fire Incident Distribution</h3>
-            <div class="h-[300px]">
-              <Pie :data="incidentTypesData" :options="pieChartOptions" />
-            </div>
-          </div>
-          <div v-if="monthlyTrendsData.labels && monthlyTrendsData.datasets.length" class="bg-white p-6 rounded-xl shadow">
-            <h3 class="text-lg font-semibold mb-4 text-[#002855]">Monthly Fire Incident Trends</h3>
-            <div class="h-[300px]">
-              <Line :data="monthlyTrendsData" :options="lineChartOptions" />
-            </div>
-          </div>
-        </div>
-
-        <!-- Recent Incidents Table -->
-        <div class="bg-white rounded-xl shadow overflow-hidden">
-          <div class="p-6 border-b border-gray-200">
-            <h3 class="text-lg font-semibold text-[#002855]">Recent Fire Incidents</h3>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead>
-                <tr class="text-left text-sm text-gray-500 bg-gray-50">
-                  <th class="px-6 py-3 font-medium">ID</th>
-                  <th class="px-6 py-3 font-medium">Category</th>
-                  <th class="px-6 py-3 font-medium">Location</th>
-                  <th class="px-6 py-3 font-medium">Status</th>
-                  <th class="px-6 py-3 font-medium">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="incident in recentIncidents" 
-                    :key="incident.id"
-                    class="border-t border-gray-100 hover:bg-gray-50">
-                  <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{{ incident.id }}</td>
-                  <td class="px-6 py-4 whitespace-nowrap">{{ incident.incidentType }}</td>
-                  <td class="px-6 py-4 whitespace-nowrap">{{ incident.location || 'N/A' }}</td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span :class="{
-                      'px-2 py-1 rounded-full text-xs font-medium': true,
-                      'bg-yellow-100 text-yellow-800': incident.status === 'Pending',
-                      'bg-blue-100 text-blue-800': incident.status === 'In Progress',
-                      'bg-green-100 text-green-800': incident.status === 'Resolved',
-                      'bg-red-100 text-red-800': incident.status === 'Disapproved'
-                    }">
-                      {{ incident.status }}
-                    </span>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">{{ formatDate(incident.dateTime) }}</td>
-                </tr>
-              </tbody>
-            </table>
+        <!-- Fire Incident Distribution Chart -->
+        <div v-if="incidentTypesData.labels && incidentTypesData.datasets.length" class="bg-white bg-opacity-80 p-8 rounded-2xl shadow-lg backdrop-blur-sm mb-8">
+          <h3 class="text-2xl font-semibold mb-6 text-[#002855]">Fire Incident Distribution</h3>
+          <div class="h-[400px]">
+            <Doughnut :data="incidentTypesData" :options="chartOptions" />
           </div>
         </div>
       </div>
@@ -172,11 +123,11 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useFireReportStore } from '@/stores/fireReportStore';
-import { LayoutDashboard, FileText, History, BarChart2, Menu, ChevronLeft, Bell, Settings, X, /*User*/ } from 'lucide-vue-next';
-import { Pie, Line } from 'vue-chartjs';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement } from 'chart.js';
+import { LayoutDashboard, FileText, History, User, Menu, ChevronLeft, Bell, Settings, X } from 'lucide-vue-next';
+import { Doughnut } from 'vue-chartjs';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 
-ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement);
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 const fireReportStore = useFireReportStore();
 const { notifications, unreadNotificationsCount, fireReports } = storeToRefs(fireReportStore);
@@ -207,16 +158,13 @@ const clearAllNotifications = () => {
 const navigationItems = [
   { name: 'Dashboard', icon: LayoutDashboard, path: '/bfpdashboard', active: true },
   { name: 'Fire Reports', icon: FileText, path: '/bfpreports', active: false },
-  { name: 'Incident History', icon: History, path: '/bfphistory', active: false },
-  { name: 'Fire Analytics', icon: BarChart2, path: '/bfpmap', active: false },
- // { name: 'Account', icon: User, path: '#', active: false },
+  { name: 'My History', icon: History, path: '/bfphistory', active: false },
+  { name: 'Profile', icon: User, path: '#', active: false },
 ];
 
 const metrics = computed(() => [
   { title: 'Total Fire Incidents', value: fireReportStore.totalFireReports, icon: Bell },
-  { title: 'Pending Fire Incidents', value: fireReportStore.pendingFireReports, icon: FileText },
-  { title: 'Resolved Fire Cases', value: fireReportStore.resolvedFireReports, icon: History },
-  { title: 'Unassigned Fire Reports', value: fireReportStore.unassignedFireReports, icon: Settings },
+  { title: 'Assigned Fire Reports', value: fireReportStore.unassignedFireReports, icon: Settings },
 ]);
 
 const formatDate = (date) => {
@@ -238,51 +186,43 @@ const incidentTypesData = computed(() => {
     datasets: [
       {
         data: Object.values(typeCounts),
-        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'],
+        backgroundColor: [
+          'rgba(255, 99, 132, 0.8)',
+          'rgba(54, 162, 235, 0.8)',
+          'rgba(255, 206, 86, 0.8)',
+          'rgba(75, 192, 192, 0.8)',
+          'rgba(153, 102, 255, 0.8)',
+        ],
+        borderColor: [
+          'rgba(255, 99, 132, 1)',
+          'rgba(54, 162, 235, 1)',
+          'rgba(255, 206, 86, 1)',
+          'rgba(75, 192, 192, 1)',
+          'rgba(153, 102, 255, 1)',
+        ],
+        borderWidth: 1,
       },
     ],
   };
 });
 
-const monthlyTrendsData = computed(() => {
-  const last6Months = Array.from({ length: 6 }, (_, i) => {
-    const d = new Date();
-    d.setMonth(d.getMonth() - i);
-    return d.toLocaleString('default', { month: 'short' });
-  }).reverse();
-
-  const monthlyCounts = fireReports.value.reduce((acc, report) => {
-    const reportMonth = new Date(report.dateTime).toLocaleString('default', { month: 'short' });
-    acc[reportMonth] = (acc[reportMonth] || 0) + 1;
-    return acc;
-  }, {});
-
-  return {
-    labels: last6Months,
-    datasets: [
-      {
-        label: 'Monthly Trends',
-        data: last6Months.map((month) => monthlyCounts[month] || 0),
-        borderColor: '#002855',
-        tension: 0.1,
-      },
-    ],
-  };
-});
-
-const pieChartOptions = {
+const chartOptions = {
   responsive: true,
   maintainAspectRatio: false,
-};
-
-const lineChartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  scales: {
-    y: {
-      beginAtZero: true,
+  plugins: {
+    legend: {
+      position: 'right',
+    },
+    tooltip: {
+      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      titleColor: 'white',
+      bodyColor: 'white',
+      borderColor: 'white',
+      borderWidth: 1,
+      cornerRadius: 8,
     },
   },
+  cutout: '60%',
 };
 
 onMounted(async () => {

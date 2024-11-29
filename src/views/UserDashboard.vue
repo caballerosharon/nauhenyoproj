@@ -128,7 +128,7 @@ const toggleSidebar = () => {
 
 const menuItems = [
   { name: 'Dashboard', to: '/dashboard', icon: LayoutDashboard, current: true },
-  { name: 'Report Crime', to: '/reportcrime', icon: FileText, current: false },
+  { name: 'Report Crime', to: '/pantry', icon: FileText, current: false },
   { name: 'Report Fire', to: '/reportfire', icon: Flame, current: false },
   { name: 'My Reports', to: '/history', icon: FolderOpen, current: false },
   { name: 'Map', to: '/usermap', icon: MapPin, current: false },

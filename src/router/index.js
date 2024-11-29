@@ -20,9 +20,10 @@ import tryLang from '../views/tryLang.vue';
 import trialMuna from '../views/trialMuna.vue';
 import firemanSignup from '../views/firemanSignup.vue';
 import firemanLogin from '../views/firemanLogin.vue';
+import firemanDashboard from '../views/firemanDashboard.vue';
 import bfpMap from '../views/bfpMap.vue';
 import landingPage from '../views/landingPage.vue';
-
+import pantryLang from '../views/pantryLang.vue';
 
 const routes = [
   { path: '/signup', name: 'userSignup', component: userSignup },
@@ -36,8 +37,8 @@ const routes = [
   { path: '/npsdashboard', name: 'npsDashboard', component: npsDashboard },
   { path: '/npsreports', name: 'npsReports', component: npsReports },
   { path: '/npshistory', name: 'npsHistory', component: npsHistory },
-  { path: '/nauhenyo', name: 'landingPage', component: landingPage },
-
+  { path: '/', name: 'landingPage', component: landingPage },
+  { path: '/pantry', name: 'pantryLang', component: pantryLang },
 
   { path: '/bfplogin', name: 'BFPLogin', component: BFPLogin },
   { path: '/bfpmap', name: 'bfpMap', component: bfpMap },
@@ -48,6 +49,7 @@ const routes = [
   { path: '/role', name: 'AdminRoleSelector', component: AdminRoleSelector },
   { path: '/try', name: 'tryLang', component: tryLang },
   { path: '/trial', name: 'trialMuna', component: trialMuna },
+  { path: '/firemandashboard', name: 'firemanDashboard', component: firemanDashboard },
   { path: '/firemansignup', name: 'firemanSignup', component: firemanSignup },
   { path: '/firemanlogin', name: 'firemanLogin', component: firemanLogin },
 ];

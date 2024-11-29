@@ -201,7 +201,7 @@
     FileText, 
     History, 
     BarChart2, 
-    User,
+   /*User*/
     Menu,
     ChevronLeft,
     Bell,
@@ -232,7 +232,7 @@
     { name: 'Fire Reports', icon: FileText, path: '/bfpreports', active: false },
     { name: 'Resolved Reports', icon: History, path: '/resolvedreports', active: true },
     { name: 'Fire Analytics', icon: BarChart2, path: '/bfpmap', active: false },
-    { name: 'Account', icon: User, path: '/account', active: false },
+   // { name: 'Account', icon: User, path: '/account', active: false },
   ];
   
   const resolvedReports = computed(() => 

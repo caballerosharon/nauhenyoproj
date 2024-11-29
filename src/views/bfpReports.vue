@@ -169,14 +169,67 @@
         </div>
       </div>
     </div>
+
+    <!-- Success Modal -->
+    <TransitionRoot appear :show="showSuccessModal" as="template">
+      <Dialog as="div" @close="closeSuccessModal" class="relative z-50">
+        <TransitionChild
+          as="template"
+          enter="duration-300 ease-out"
+          enter-from="opacity-0"
+          enter-to="opacity-100"
+          leave="duration-200 ease-in"
+          leave-from="opacity-100"
+          leave-to="opacity-0"
+        >
+          <div class="fixed inset-0 bg-black bg-opacity-25" />
+        </TransitionChild>
+
+        <div class="fixed inset-0 overflow-y-auto">
+          <div class="flex min-h-full items-center justify-center p-4 text-center">
+            <TransitionChild
+              as="template"
+              enter="duration-300 ease-out"
+              enter-from="opacity-0 scale-95"
+              enter-to="opacity-100 scale-100"
+              leave="duration-200 ease-in"
+              leave-from="opacity-100 scale-100"
+              leave-to="opacity-0 scale-95"
+            >
+              <DialogPanel class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">
+                  Responder Assigned Successfully
+                </DialogTitle>
+                <div class="mt-2">
+                  <p class="text-sm text-gray-500">
+                    The responder has been successfully assigned to the fire incident report.
+                  </p>
+                </div>
+
+                <div class="mt-4">
+                  <button
+                    type="button"
+                    class="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                    @click="closeSuccessModal"
+                  >
+                    Got it, thanks!
+                  </button>
+                </div>
+              </DialogPanel>
+            </TransitionChild>
+          </div>
+        </div>
+      </Dialog>
+    </TransitionRoot>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue";
-import { ChevronLeft, Menu, Bell, Settings, Eye, UserPlus, X, LayoutDashboard, FileText, History, BarChart2, User } from "lucide-vue-next";
+import { ChevronLeft, Menu, Bell, Settings, Eye, UserPlus, X, LayoutDashboard, FileText, History, BarChart2 } from "lucide-vue-next";
 import { useFireReportStore } from "@/stores/fireReportStore";
 import { useFirefighterStore } from "@/stores/firefighterStore";
+import { TransitionRoot, TransitionChild, Dialog, DialogPanel, DialogTitle } from '@headlessui/vue'
 
 const fireReportStore = useFireReportStore();
 const firefighterStore = useFirefighterStore();
@@ -185,6 +238,7 @@ const isSidebarCollapsed = ref(false);
 const selectedReport = ref(null);
 const showAssignModal = ref(false);
 const selectedFirefighter = ref("");
+const showSuccessModal = ref(false);
 
 const toggleSidebar = () => {
   isSidebarCollapsed.value = !isSidebarCollapsed.value;
@@ -233,12 +287,21 @@ const closeAssignModal = () => {
 
 const assignFirefighter = async () => {
   if (selectedReport.value && selectedFirefighter.value) {
-    await fireReportStore.assignFirefighter(selectedReport.value.id, selectedFirefighter.value);
-    await fireReportStore.updateReportStatus(selectedReport.value.id, 'Resolved');
-    selectedReport.value.status = 'Resolved';
-    selectedReport.value.assignedTo = selectedFirefighter.value;
-    closeAssignModal();
+    try {
+      await fireReportStore.assignFirefighter(selectedReport.value.id, selectedFirefighter.value);
+      selectedReport.value.status = 'Resolved';
+      selectedReport.value.assignedTo = selectedFirefighter.value;
+      closeAssignModal();
+      showSuccessModal.value = true;
+    } catch (error) {
+      console.error('Error assigning firefighter:', error);
+      // Handle error (e.g., show an error message to the user)
+    }
   }
+};
+
+const closeSuccessModal = () => {
+  showSuccessModal.value = false;
 };
 
 const formatDate = (date) => {
@@ -251,7 +314,6 @@ const navigationItems = [
   { name: "Fire Reports", icon: FileText, path: "/bfpreports", active: true },
   { name: "Incident History", icon: History, path: "/bfphistory", active: false },
   { name: "Fire Analytics", icon: BarChart2, path: "/bfpmap", active: false },
-  { name: "Account", icon: User, path: "/bfpaccount", active: false },
 ];
 
 onMounted(async () => {
@@ -271,3 +333,4 @@ onMounted(async () => {
   opacity: 0;
 }
 </style>
+

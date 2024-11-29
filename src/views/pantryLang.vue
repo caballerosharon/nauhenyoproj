@@ -168,14 +168,14 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import { useCrimeReportStore } from '../stores/crimeReportStore';
 import { useToast } from 'vue-toastification';
-import { auth } from '../firebase/config';
+import { auth, db, storage } from '../firebase/config';
 import { onAuthStateChanged } from 'firebase/auth';
+import { collection, addDoc } from 'firebase/firestore';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { 
   LayoutDashboard, 
-  FileText, 
-  Flame,
+  FileText, Flame,
   FolderOpen, 
   MapPin, 
   UserCircle,
@@ -188,7 +188,6 @@ import {
   X
 } from 'lucide-vue-next';
 
-const crimeReportStore = useCrimeReportStore();
 const toast = useToast();
 
 const isSidebarCollapsed = ref(false);
@@ -251,7 +250,8 @@ const handleFileUpload = (event) => {
 };
 
 const removeFile = (index) => {
-  selectedFiles.value.splice(index, 1);
+  
+selectedFiles.value.splice(index, 1);
 };
 
 const getFilePreview = (file) => {
@@ -273,28 +273,52 @@ const generateCustomId = () => {
 const submitReport = async () => {
   const dateTime = new Date(`${date.value}T${time.value}`);
   const customId = generateCustomId();
-  const reportData = {
-    incidentType: incidentType.value,
-    incidentSub: incidentSub.value,
-    location: location.value,
-    description: description.value,
-    dateTime: dateTime.toISOString(),
-    userId: userId.value,
-    reportId: customId,
-    coordinates: {
-      latitude: latitude.value,
-      longitude: longitude.value
-    }
-  };
-
+  
   try {
-    await crimeReportStore.submitReport(reportData, selectedFiles.value);
+    // Check if user is authenticated
+    if (!auth.currentUser) {
+      throw new Error('User is not authenticated');
+    }
+
+    // Upload images to Firebase Storage
+    const imageUrls = await Promise.all(selectedFiles.value.map(async (file) => {
+      const fileRef = storageRef(storage, `crime_reports/${customId}/${file.name}`);
+      try {
+        await uploadBytes(fileRef, file);
+        return await getDownloadURL(fileRef);
+      } catch (error) {
+        console.error('Error uploading file:', error);
+        throw new Error('Failed to upload image');
+      }
+    }));
+
+    // Prepare report data
+    const reportData = {
+      incidentType: incidentType.value,
+      incidentSub: incidentSub.value,
+      location: location.value,
+      description: description.value,
+      dateTime: dateTime.toISOString(),
+      userId: userId.value,
+      reportId: customId,
+      coordinates: {
+        latitude: latitude.value,
+        longitude: longitude.value
+      },
+      imageUrls: imageUrls,
+      status: 'Pending',
+    };
+
+    // Add report to Firestore
+    const docRef = await addDoc(collection(db, 'crimes'), reportData);
+    console.log("Document written with ID: ", docRef.id);
+
     toast.success('Report submitted successfully!');
     showModal.value = true;
     resetForm();
   } catch (error) {
     console.error('Error submitting report:', error);
-    toast.error('Failed to submit report. Please try again.');
+    toast.error(`Failed to submit report: ${error.message}`);
   }
 };
 

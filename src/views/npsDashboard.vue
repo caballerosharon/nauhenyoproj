@@ -48,10 +48,6 @@
             <Bell class="w-6 h-6" />
             <span class="sr-only">Notifications</span>
           </button>
-          <button class="p-1 rounded-full hover:bg-[#041a30] focus:outline-none focus:ring-2 focus:ring-[#E3EFF6]">
-            <Settings class="w-6 h-6" />
-            <span class="sr-only">Settings</span>
-          </button>
         </div>
       </div>
 
@@ -148,7 +144,6 @@ import {
   Radio,
   Menu,
   Bell,
-  Settings
 } from 'lucide-vue-next'
 import { Pie, Line } from 'vue-chartjs'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement } from 'chart.js'

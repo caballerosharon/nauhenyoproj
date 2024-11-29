@@ -30,10 +30,6 @@
             <UserIcon class="w-6 h-6 mr-2" />
             Log in as User
           </button>
-          <button @click="selectLoginType('responder')" class="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg transition duration-300 ease-in-out flex items-center justify-center">
-            <AlertCircleIcon class="w-6 h-6 mr-2" />
-            Log in as Responder
-          </button>
         </div>
         <button @click="showLoginModal = false" class="mt-6 text-gray-400 hover:text-white transition duration-300 ease-in-out block mx-auto">
           Cancel
@@ -58,7 +54,7 @@
         <p class="text-xl mb-8 animate-fade-in-up animation-delay-200 max-w-2xl mx-auto">
            Reporting System for Crime and Fire Incidents
         </p>
-        <button class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-full transition duration-300 ease-in-out animate-fade-in-up animation-delay-400 shadow-lg">
+        <button @click="redirectToLogin" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-full transition duration-300 ease-in-out animate-fade-in-up animation-delay-400 shadow-lg">
           Report Incident
         </button>
       </div>
@@ -74,7 +70,7 @@
           <span class="text-red-500 text-sm font-medium mb-2 block">About Us</span>
           <h2 class="text-4xl font-bold mb-4">Empowering Communities Through Fire and Crime Reporting</h2>
           <p class="text-gray-300 text-lg leading-relaxed mb-8 max-w-3xl mx-auto">
-            NauHenyo is designed to revolutionize how communities report and track both crime and fire incidents. reating a safer environment for everyone through efficient reporting and response systems.
+            NauHenyo is designed to revolutionize how communities report and track both crime and fire incidents. Ensuring a safer environment for everyone through efficient reporting system.
           </p>
         </div>
       </div>
@@ -271,7 +267,7 @@ const slides = [
   { 
     image: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/6925cf22988fc6faddf43fd98b218cd0.jpg-KURr4l4IbTAclx80ZjWfYS9FhPYIs3.jpeg',
     title: 'Crime Reporting',
-    description: 'Our advanced platform enables real-time crime reporting with precise location tracking, ensuring faster response times and more effective crime prevention.'
+    description: 'Our platform enables real-time crime reporting with precise location tracking, ensuring faster response times and more effective crime prevention.'
   },
   { 
     image: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1c6613c163c899e7282bc687471d2890.jpg-Ta47bZtsyHv3u3TpydSu1Us3rdVWOU.jpeg',
@@ -286,7 +282,7 @@ const slides = [
   { 
     image: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/pnp.jpg-0zpDfJWtcZAfiq7pwM6NXkVd9IzeqC.jpeg',
     title: 'Location Tracking',
-    description: 'Our advanced GPS integration allows for accurate pinpointing of reported incidents, enabling emergency responders to navigate efficiently and improve overall emergency management.'
+    description: 'Location integration allows for accurate pinpointing of reported incidents, enabling emergency responders to navigate efficiently and improve overall emergency management.'
   }
 ];
 
@@ -345,6 +341,10 @@ const selectLoginType = (type) => {
     default:
       console.error('Invalid login type');
   }
+};
+
+const redirectToLogin = () => {
+  router.push('/login');
 };
 
 const hoverCard = (index) => {
