@@ -172,7 +172,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useFireReportStore } from '@/stores/fireReportStore';
-import { LayoutDashboard, FileText, History, BarChart2, Menu, ChevronLeft, Bell, Settings, X, /*User*/ } from 'lucide-vue-next';
+import { LayoutDashboard, FileText, History, BarChart2, Menu, ChevronLeft, Bell, Settings, X, Users } from 'lucide-vue-next';
 import { Pie, Line } from 'vue-chartjs';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, PointElement, LineElement } from 'chart.js';
 
@@ -204,12 +204,13 @@ const clearAllNotifications = () => {
   fireReportStore.clearNotifications();
 };
 
+
 const navigationItems = [
-  { name: 'Dashboard', icon: LayoutDashboard, path: '/bfpdashboard', active: true },
-  { name: 'Fire Reports', icon: FileText, path: '/bfpreports', active: false },
-  { name: 'Incident History', icon: History, path: '/bfphistory', active: false },
-  { name: 'Fire Analytics', icon: BarChart2, path: '/bfpmap', active: false },
- // { name: 'Account', icon: User, path: '#', active: false },
+  { name: "Dashboard", icon: LayoutDashboard, path: "/bfpdashboard", active: true },
+  { name: "Fire Reports", icon: FileText, path: "/bfpreports", active: false },
+  { name: "Firefighters", icon: Users, path: "/bfpfireman", active: false },
+  { name: "Incident History", icon: History, path: "/bfphistory", active: false },
+  { name: "Fire Analytics", icon: BarChart2, path: "/bfpmap", active: false },
 ];
 
 const metrics = computed(() => [

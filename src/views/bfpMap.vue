@@ -64,7 +64,21 @@
           <!-- Map Panel -->
           <div class="flex-grow bg-white rounded-lg shadow-md p-4">
             <h2 class="text-lg font-semibold mb-4 text-[#002855]">Fire Incident Map</h2>
-            <div id="map" class="h-[calc(100%-2rem)] w-full"></div>
+            <div class="flex mb-4 space-x-2">
+              <input
+                ref="searchInput"
+                type="text"
+                placeholder="Search for a location"
+                class="flex-grow p-2 border border-gray-300 rounded-md"
+              />
+              <button
+                @click="openInGoogleMaps"
+                class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors duration-200"
+              >
+                Open in Google Maps
+              </button>
+            </div>
+            <div id="map" class="h-[calc(100%-4rem)] w-full"></div>
           </div>
 
           <!-- Side Panels -->
@@ -84,9 +98,9 @@
               <h2 class="text-lg font-semibold mb-4 text-[#002855]">Recent Reports</h2>
               <ul class="space-y-2">
                 <li v-for="report in fireReportStore.recentFireReports" :key="report.id" class="border-b pb-2">
-                  <p class="font-semibold">{{ report.incidentType }}</p>
+                  <p class="font-semibold">{{ report.subType }}</p>
                   <p class="text-sm text-gray-600">{{ report.location }}</p>
-                  <p class="text-xs text-gray-500">{{ formatDate(report.dateTime) }}</p>
+                  <p class="text-xs text-gray-500">{{ formatDate(report.timestamp) }}</p>
                 </li>
               </ul>
             </div>
@@ -123,29 +137,39 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
+import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { db, auth } from '../firebase/config';
+import { useFireReportStore } from '../stores/fireReportStore';
 import { 
   LayoutDashboard, 
   FileText, 
   History, 
   BarChart2, 
-  /*User*/
+  Users,
   Menu,
   ChevronLeft,
   Bell,
   Settings,
   X
 } from 'lucide-vue-next';
-import L from 'leaflet';
-import "leaflet/dist/leaflet.css";
-import { useFireReportStore } from '@/stores/fireReportStore';
+
+// Declare google as a global variable to avoid ESLint errors
+/* global google */
+
+// Map variables
+let map = null;
+let heatmap = null;
+let autocomplete = null;
+const markers = ref([]);
+const infoWindows = ref([]);
+const allReports = ref([]);
+const searchInput = ref(null);
 
 const fireReportStore = useFireReportStore();
 
 const isSidebarCollapsed = ref(false);
-const map = ref(null);
 const showNotifications = ref(false);
-let unsubscribe = null;
 
 const toggleSidebar = () => {
   isSidebarCollapsed.value = !isSidebarCollapsed.value;
@@ -156,157 +180,265 @@ const toggleNotifications = () => {
 };
 
 const navigationItems = [
-  { name: 'Dashboard', icon: LayoutDashboard, path: '/bfpdashboard', active: false },
-  { name: 'Fire Reports', icon: FileText, path: '/bfpreports', active: false },
-  { name: 'Incident History', icon: History, path: '/bfphistory', active: false },
-  { name: 'Fire Analytics', icon: BarChart2, path: '/bfpmap', active: false },
-//  { name: 'Account', icon: User, path: '/account', active: false },
+  { name: "Dashboard", icon: LayoutDashboard, path: "/bfpdashboard", active: false },
+  { name: "Fire Reports", icon: FileText, path: "/bfpreports", active: false },
+  { name: "Firefighters", icon: Users, path: "/bfpfireman", active: false },
+  { name: "Incident History", icon: History, path: "/bfphistory", active: false },
+  { name: "Fire Analytics", icon: BarChart2, path: "/bfpmap", active: true },
 ];
 
-const convertLocationToCoordinates = (location) => {
-  // This is a placeholder function. In a real application, you would use a geocoding service.
-  // For demonstration purposes, we'll return coordinates within Naujan, Oriental Mindoro.
-  const naujanCenter = [13.3167, 121.3000]; // Approximate center of Naujan
+// Initialize map
+const initMap = () => {
+  const defaultCenter = { lat: 12.8797, lng: 121.7740 };
   
-  // Use the location parameter to generate a deterministic offset
-  // This is just for demonstration; in a real app, you'd use actual geocoding
-  const hash = location.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const latOffset = (hash % 100) / 1000; // Creates an offset between -0.05 and 0.05
-  const lngOffset = ((hash * 31) % 100) / 1000; // Different offset for longitude
+  map = new google.maps.Map(document.getElementById('map'), {
+    center: defaultCenter,
+    zoom: 6,
+    styles: [
+      {
+        featureType: "administrative",
+        elementType: "geometry",
+        stylers: [{ visibility: "simplified" }]
+      },
+      {
+        featureType: "water",
+        elementType: "geometry",
+        stylers: [{ color: "#e9e9e9" }]
+      }
+    ]
+  });
 
-  const lat = naujanCenter[0] + latOffset;
-  const lng = naujanCenter[1] + lngOffset;
-  
-  return [lat, lng];
+  // Initialize Autocomplete
+  autocomplete = new google.maps.places.Autocomplete(searchInput.value, {
+    types: ['geocode']
+  });
+
+  autocomplete.addListener('place_changed', () => {
+    const place = autocomplete.getPlace();
+    if (!place.geometry) {
+      console.log("Returned place contains no geometry");
+      return;
+    }
+
+    if (place.geometry.viewport) {
+      map.fitBounds(place.geometry.viewport);
+    } else {
+      map.setCenter(place.geometry.location);
+      map.setZoom(17);
+    }
+  });
 };
 
-const fireReportsWithCoordinates = computed(() => {
-  return fireReportStore.fireReports.map(report => ({
-    ...report,
-    coordinates: convertLocationToCoordinates(report.location)
-  }));
+// Get directions
+const openInGoogleMaps = () => {
+  const fireStation = { lat: 13.324295157229585, lng: 121.30357728456404 };
+  const destination = autocomplete.getPlace();
+
+  if (!destination || !destination.geometry) {
+    alert("Please select a valid destination from the autocomplete suggestions.");
+    return;
+  }
+
+  const url = `https://www.google.com/maps/dir/?api=1&origin=${fireStation.lat},${fireStation.lng}&destination=${destination.geometry.location.lat()},${destination.geometry.location.lng()}&travelmode=driving`;
+  window.open(url, '_blank');
+};
+
+
+// Format date helper
+const formatDate = (date) => {
+  if (date && date.seconds) {
+    return new Date(date.seconds * 1000).toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  }
+  return new Date(date).toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+};
+
+// Load and process reports
+const loadUserReports = async () => {
+  try {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      console.error('No user logged in');
+      return;
+    }
+
+    const data = [];
+    
+    // Query all fire reports
+    const allFireReportsQuery = query(
+      collection(db, 'fireReports'), 
+      where('userId', '==', currentUser.uid)
+    );
+    const allFireSnapshot = await getDocs(allFireReportsQuery);
+    
+    allFireSnapshot.forEach((doc) => {
+      const report = doc.data();
+      if (report.coordinates) {
+        data.push({
+          id: doc.id,
+          lat: report.coordinates.latitude,
+          lng: report.coordinates.longitude,
+          type: 'Fire',
+          subType: report.incidentType || 'Unknown',
+          location: report.location || 'Not specified',
+          timestamp: report.dateTime ? new Date(report.dateTime.seconds * 1000) : new Date(),
+          status: report.status || 'Pending'
+        });
+      }
+    });
+
+    allReports.value = data;
+    addMarkersToMap(data);
+    fireReportStore.setFireReports(data);
+
+    // Query recent fire reports
+    const recentFireReportsQuery = query(
+      collection(db, 'fireReports'), 
+      where('userId', '==', currentUser.uid),
+      orderBy('dateTime', 'desc'),
+      limit(5)
+    );
+    const recentFireSnapshot = await getDocs(recentFireReportsQuery);
+    
+    const recentReports = recentFireSnapshot.docs.map(doc => {
+      const report = doc.data();
+      return {
+        id: doc.id,
+        subType: report.incidentType || 'Unknown',
+        location: report.location || 'Not specified',
+        timestamp: report.dateTime ? new Date(report.dateTime.seconds * 1000) : new Date()
+      };
+    });
+
+    fireReportStore.setRecentFireReports(recentReports);
+  } catch (error) {
+    console.error('Error loading reports:', error);
+  }
+};
+
+// Add markers to map
+const addMarkersToMap = (reports) => {
+  // Clear existing markers and info windows
+  markers.value.forEach(marker => marker.setMap(null));
+  infoWindows.value.forEach(window => window.close());
+  markers.value = [];
+  infoWindows.value = [];
+
+  if (reports.length === 0) {
+    return;
+  }
+
+  const bounds = new google.maps.LatLngBounds();
+
+  reports.forEach((report) => {
+    const position = new google.maps.LatLng(report.lat, report.lng);
+    bounds.extend(position);
+
+    // Create marker
+    const marker = new google.maps.Marker({
+      position: position,
+      map: map,
+      icon: {
+        url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
+        scaledSize: new google.maps.Size(40, 40)
+      },
+      animation: google.maps.Animation.DROP,
+      title: `${report.type} - ${report.subType}`
+    });
+
+    // Create info window content
+    const content = `
+      <div class="p-3 bg-gray-800 text-white rounded-lg">
+        <h3 class="font-bold text-lg mb-2 text-teal-300">${report.type} Report</h3>
+        <p><strong class="text-teal-400">Type:</strong> ${report.subType}</p>
+        <p><strong class="text-teal-400">Location:</strong> ${report.location}</p>
+        <p><strong class="text-teal-400">Date:</strong> ${formatDate(report.timestamp)}</p>
+        <p><strong class="text-teal-400">Status:</strong> <span class="px-2 py-1 rounded ${
+          report.status === 'Completed' ? 'bg-green-800 text-green-200' :
+          report.status === 'In Progress' ? 'bg-yellow-800 text-yellow-200' :
+          'bg-red-800 text-red-200'
+        }">${report.status}</span></p>
+      </div>
+    `;
+
+    // Create info window
+    const infoWindow = new google.maps.InfoWindow({
+      content: content,
+      maxWidth: 300
+    });
+
+    // Add click listener to marker
+    marker.addListener('click', () => {
+      infoWindows.value.forEach(window => window.close());
+      infoWindow.open(map, marker);
+    });
+
+    markers.value.push(marker);
+    infoWindows.value.push(infoWindow);
+  });
+
+  // Fit map to show all markers
+  if (markers.value.length > 0) {
+    map.fitBounds(bounds);
+    if (markers.value.length === 1) {
+      map.setZoom(15);
+    }
+  }
+};
+
+// Load Google Maps script and initialize
+const loadGoogleMapsScript = () => {
+  const script = document.createElement('script');
+  script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDe50S-5Ul4XkfcQ5tcCR4Xb3zTEiDvPgs&libraries=places`;
+  script.async = true;
+  script.defer = true;
+  script.onload = () => {
+    initMap();
+    loadUserReports();
+  };
+  document.head.appendChild(script);
+};
+
+onMounted(() => {
+  loadGoogleMapsScript();
 });
 
-const groupedFireReports = computed(() => {
-  const grouped = {};
-  fireReportsWithCoordinates.value.forEach(report => {
-    const key = report.coordinates.join(',');
-    if (!grouped[key]) {
-      grouped[key] = [];
-    }
-    grouped[key].push(report);
-  });
-  return grouped;
+onUnmounted(() => {
+  markers.value.forEach(marker => marker.setMap(null));
+  infoWindows.value.forEach(window => window.close());
+  if (heatmap) {
+    heatmap.setMap(null);
+  }
 });
 
 const highestFireRateArea = computed(() => {
-  const areaCounts = fireReportStore.fireReports.reduce((acc, report) => {
+  if (!allReports.value || allReports.value.length === 0) {
+    return null;
+  }
+
+  const areaCounts = allReports.value.reduce((acc, report) => {
     acc[report.location] = (acc[report.location] || 0) + 1;
     return acc;
   }, {});
 
-  if (Object.keys(areaCounts).length === 0) {
-    return null;
-  }
-
   const highestArea = Object.entries(areaCounts).reduce((a, b) => a[1] > b[1] ? a : b);
   return { name: highestArea[0], count: highestArea[1] };
 });
-
-const formatDate = (date) => {
-  if (date && date.seconds) {
-    return new Date(date.seconds * 1000).toLocaleString();
-  }
-  return new Date(date).toLocaleString();
-};
 
 const markAsRead = (notificationId) => {
   fireReportStore.markNotificationAsRead(notificationId);
 };
 
 const clearAllNotifications = () => {
-  fireReportStore.clearNotifications();
-  showNotifications.value = false;
+  fireReportStore.clearAllNotifications();
 };
-
-onMounted(async () => {
-  unsubscribe = await fireReportStore.fetchFireReports();
-  
-  // Initialize the map
-  map.value = L.map('map').setView([13.3167, 121.3000], 12); // Center on Naujan, Oriental Mindoro
-  
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors'
-  }).addTo(map.value);
-
-  // Create a custom fire icon
-  const fireIcon = L.divIcon({
-    html: `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="#ef4444">
-        <path d="M12 23c6.075 0 11-4.925 11-11S18.075 1 12 1 1 5.925 1 12s4.925 11 11 11zm0-15.75c1.5 0 2.75.75 2.75 2.25 0 1.5-1.25 3-2.75 5.25-1.5-2.25-2.75-3.75-2.75-5.25 0-1.5 1.25-2.25 2.75-2.25z"/>
-      </svg>
-    `,
-    className: 'custom-fire-icon',
-    iconSize: [24, 24],
-    iconAnchor: [12, 24],
-    popupAnchor: [0, -24]
-  });
-
-  // Function to update markers
-  const updateMarkers = () => {
-    // Clear existing markers
-    map.value.eachLayer((layer) => {
-      if (layer instanceof L.Marker) {
-        map.value.removeLayer(layer);
-      }
-    });
-
-    // Add markers for each group of fire reports
-    Object.entries(groupedFireReports.value).forEach(([key, reports]) => {
-      const [lat, lng] = key.split(',').map(Number);
-      const marker = L.marker([lat, lng], { icon: fireIcon }).addTo(map.value);
-      
-      const popupContent = `
-        <div class="p-4 max-w-xs">
-          <h3 class="font-bold text-lg mb-2">${reports[0].incidentType}</h3>
-          <div class="space-y-1">
-            <p class="text-sm"><span class="font-semibold">Location:</span> ${reports[0].location}</p>
-            <p class="text-sm"><span class="font-semibold">Date:</span> ${formatDate(reports[0].dateTime)}</p>
-            <p class="text-sm"><span class="font-semibold">Status:</span> 
-              <span class="px-2 py-1 rounded-full text-xs ${
-                reports[0].status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' : 
-                reports[0].status === 'Resolved' ? 'bg-green-100 text-green-800' : 
-                'bg-red-100 text-red-800'
-              }">${reports[0].status}</span>
-            </p>
-          </div>
-          ${reports.length > 1 ? `
-            <div class="mt-2 pt-2 border-t">
-              <p class="text-sm text-gray-600">${reports.length - 1} more incident${reports.length - 1 > 1 ? 's' : ''} at this location</p>
-            </div>
-          ` : ''}
-        </div>
-      `;
-
-      marker.bindPopup(popupContent, {
-        maxWidth: 300,
-        className: 'custom-popup'
-      });
-    });
-  };
-
-  // Initial update of markers
-  updateMarkers();
-
-  // Watch for changes in fireReports and update markers
-  watch(() => fireReportStore.fireReports, updateMarkers, { deep: true });
-});
-
-onUnmounted(() => {
-  if (unsubscribe) {
-    unsubscribe();
-  }
-});
 </script>
 
 <style scoped>
@@ -379,3 +511,4 @@ html {
   color: #666;
 }
 </style>
+

@@ -201,7 +201,7 @@
     FileText, 
     History, 
     BarChart2, 
-   /*User*/
+    Users,
     Menu,
     ChevronLeft,
     Bell,
@@ -227,13 +227,14 @@
     isSidebarCollapsed.value = !isSidebarCollapsed.value;
   };
   
+
   const navigationItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, path: '/bfpdashboard', active: false },
-    { name: 'Fire Reports', icon: FileText, path: '/bfpreports', active: false },
-    { name: 'Resolved Reports', icon: History, path: '/resolvedreports', active: true },
-    { name: 'Fire Analytics', icon: BarChart2, path: '/bfpmap', active: false },
-   // { name: 'Account', icon: User, path: '/account', active: false },
-  ];
+  { name: "Dashboard", icon: LayoutDashboard, path: "/bfpdashboard", active: false },
+  { name: "Fire Reports", icon: FileText, path: "/bfpreports", active: false },
+  { name: "Firefighters", icon: Users, path: "/bfpfireman", active: false },
+  { name: "Incident History", icon: History, path: "/bfphistory", active: true },
+  { name: "Fire Analytics", icon: BarChart2, path: "/bfpmap", active: false },
+];
   
   const resolvedReports = computed(() => 
     fireReportStore.fireReports.filter(report => report.status === 'Resolved' || report.status === 'Closed')

@@ -1,103 +1,115 @@
 <template>
-  <div class="min-h-screen flex flex-col md:flex-row">
-    <!-- Left side with logo -->
-    <div class="w-full md:w-1/2 bg-[#062654] flex items-center justify-center p-8 md:fixed md:top-0 md:left-0 md:bottom-0">
-      <img src="@/assets/naulogo.png" alt="Nauhenyo Logo" class="w-48 md:w-64 lg:w-96 h-auto">
-    </div>
-
-    <!-- Right side with form -->
-    <div class="w-full md:w-1/2 md:ml-[50%] bg-white flex items-center justify-center p-4 md:p-8 min-h-screen">
-      <div class="w-full max-w-md">
-        <form @submit.prevent="handleSubmit" class="space-y-6">
-          <h1 class="text-2xl md:text-3xl font-bold text-gray-900 mb-8">Sign In</h1>
-
-          <div class="space-y-4">
-            <div class="flex flex-col">
-              <label for="email" class="text-sm text-gray-700 mb-1 text-left">Email</label>
-              <input 
-                id="email" 
-                v-model="form.email" 
-                type="email" 
-                required 
-                class="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-[#062654] focus:border-[#062654]"
-                placeholder="Enter your email"
-              >
+  <div class="min-h-screen w-full bg-gradient-to-br from-gray-900 to-black">
+    <!-- Fixed panel at the top -->
+    <div class="fixed top-0 left-0 right-0 w-full h-full bg-gradient-to-br from-gray-900 to-black shadow-2xl overflow-auto">
+      <!-- Centered content -->
+      <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="w-full max-w-md bg-gray-800 rounded-3xl shadow-2xl overflow-hidden">
+          <div class="p-8 relative">
+            <!-- Centered Logo and X Button -->
+            <div class="flex justify-center items-center mb-8 relative">
+              <img src="@/assets/naulogo.png" alt="Nauhenyo Logo" class="w-24 h-24">
+              <button @click="goToLandingPage" class="absolute right-0 top-0 text-gray-400 hover:text-white transition-colors duration-300">
+                <XIcon class="h-6 w-6" />
+              </button>
             </div>
 
-            <div class="flex flex-col">
-              <label for="password" class="text-sm text-gray-700 mb-1 text-left">Password</label>
-              <div class="relative">
-                <input 
-                  id="password" 
-                  v-model="form.password" 
-                  :type="showPassword ? 'text' : 'password'" 
+            <div class="text-center mb-8">
+              <h2 class="text-3xl font-bold text-white">Welcome Back</h2>
+              <p class="text-gray-400 mt-2">Sign in to your account</p>
+            </div>
+            
+            <form @submit.prevent="handleSubmit" class="space-y-6">
+              <div>
+                <label for="email" class="block text-sm font-medium text-gray-400 mb-1">Email</label>
+                <input
+                  id="email"
+                  v-model="form.email"
+                  type="email"
                   required
-                  class="w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-[#062654] focus:border-[#062654]"
-                  placeholder="Enter your password"
+                  class="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition duration-300"
+                  placeholder="Enter your email"
                 >
-                <button 
-                  type="button" 
-                  @click="showPassword = !showPassword" 
-                  class="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  aria-label="Toggle password visibility"
+              </div>
+              
+              <div>
+                <label for="password" class="block text-sm font-medium text-gray-400 mb-1">Password</label>
+                <div class="relative">
+                  <input
+                    id="password"
+                    v-model="form.password"
+                    :type="showPassword ? 'text' : 'password'"
+                    required
+                    class="w-full px-4 py-2 rounded-lg bg-gray-700 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition duration-300"
+                    placeholder="Enter your password"
+                  >
+                  <button 
+                    type="button"
+                    @click="showPassword = !showPassword"
+                    class="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  >
+                    <EyeIcon v-if="!showPassword" class="h-5 w-5 text-gray-400" />
+                    <EyeOffIcon v-else class="h-5 w-5 text-gray-400" />
+                  </button>
+                </div>
+              </div>
+              
+              <div>
+                <button
+                  type="submit"
+                  class="w-full py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition duration-300"
+                  :disabled="isLoggingIn"
                 >
-                  <EyeIcon v-if="!showPassword" class="h-5 w-5 text-gray-400" />
-                  <EyeOffIcon v-else class="h-5 w-5 text-gray-400" />
+                  <span v-if="!isLoggingIn">Sign In</span>
+                  <span v-else class="flex items-center justify-center">
+                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Signing In...
+                  </span>
                 </button>
               </div>
+            </form>
+            
+            <div class="mt-6 text-center">
+              <p class="text-sm text-gray-400">
+                Don't have an account?
+                <a @click="handleSignUp" class="font-medium text-red-500 hover:text-red-400 cursor-pointer transition duration-300">Sign up</a>
+              </p>
             </div>
           </div>
-
-          <button 
-            type="submit" 
-            class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-[#062654] hover:bg-[#083472] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#062654] transition-colors"
-          >
-            Log in
-          </button>
-
-          <div class="text-sm text-center">
-            <span class="text-gray-600">Don't have an account? </span>
-            <a @click="handleSignUp" class="text-[#062654] hover:text-[#083472] cursor-pointer font-medium">
-              Sign Up
-            </a>
-          </div>
-        </form>
+        </div>
       </div>
     </div>
 
     <!-- Error Modal -->
     <div v-if="error" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-      <div class="bg-white rounded-lg p-6 max-w-sm w-full shadow-xl">
-        <button @click="closeModal" class="float-right text-gray-600 hover:text-gray-800">
-          <XIcon class="h-6 w-6" />
-        </button>
-        <p class="text-red-600 mt-4">{{ error }}</p>
+      <div class="bg-gray-800 rounded-lg p-6 max-w-sm w-full shadow-xl">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-medium text-white">Error</h3>
+          <button @click="closeModal" class="text-gray-400 hover:text-white transition-colors duration-300">
+            <XIcon class="h-6 w-6" />
+          </button>
+        </div>
+        <p class="text-red-400">{{ error }}</p>
       </div>
     </div>
-
-    <!-- Success Progress Bar Modal -->
-    <div v-if="isLoggingIn" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-      <div class="bg-white rounded-lg p-8 max-w-sm w-full shadow-xl">
-        <h2 class="text-xl font-semibold mb-6 text-center">Logging in...</h2>
-        <div class="relative">
-          <div class="overflow-hidden h-3 rounded-full bg-gray-100">
-            <div 
-              class="h-full rounded-full bg-gradient-to-r from-[#062654] via-[#083472] to-[#062654] animate-gradient transition-all duration-500 ease-out bg-[length:200%_100%]"
-              :style="{ width: `${progress}%` }"
-            ></div>
+    
+    <!-- Redirection Spinner Modal -->
+    <div v-if="isRedirecting" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+      <div class="bg-gray-800 rounded-lg p-8 max-w-sm w-full shadow-xl text-center">
+        <div class="relative w-24 h-24 mx-auto mb-4">
+          <div class="absolute inset-0 rounded-full border-4 border-gray-700"></div>
+          <div class="absolute inset-0 rounded-full border-t-4 border-red-500 animate-spin"></div>
+          <div class="absolute inset-0 flex items-center justify-center">
+            <svg class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- Sign Up Spinner -->
-    <div v-if="isSigningUp" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-      <div class="bg-white rounded-lg p-8 max-w-sm w-full shadow-xl text-center">
-        <div class="relative w-16 h-16 mx-auto mb-4">
-          <div class="absolute inset-0 rounded-full border-4 border-gray-200"></div>
-          <div class="absolute inset-0 rounded-full border-4 border-[#062654] border-t-transparent animate-spin"></div>
-        </div>
-        <p class="text-gray-700 font-medium">Redirecting to Sign Up...</p>
+        <p class="text-white font-medium text-lg">Redirecting...</p>
+        <p class="text-gray-400 mt-2">Please wait while we prepare your dashboard</p>
       </div>
     </div>
   </div>
@@ -119,53 +131,61 @@ const form = ref({
 const showPassword = ref(false);
 const error = ref('');
 const isLoggingIn = ref(false);
-const isSigningUp = ref(false);
-const progress = ref(0);
+const isRedirecting = ref(false);
 
 const handleSubmit = async () => {
   error.value = '';
   isLoggingIn.value = true;
-  progress.value = 0;
-
-  const progressInterval = setInterval(() => {
-    if (progress.value < 90) {
-      progress.value += 10;
-    }
-  }, 200);
 
   try {
-    const userCredential = await signInWithEmailAndPassword(auth, form.value.email, form.value.password);
-    console.log('User logged in:', userCredential.user);
+    // Check for admin credentials first
+    if (form.value.email === 'nauhenyobfp@gmail.com' && form.value.password === 'nauhenyobfp') {
+      isRedirecting.value = true;
+      setTimeout(() => {
+        isLoggingIn.value = false;
+        isRedirecting.value = false;
+        router.push('/bfpdashboard');
+      }, 2000);
+    } else if (form.value.email === 'nauhenyonps@gmail.com' && form.value.password === 'nauhenyonps') {
+      isRedirecting.value = true;
+      setTimeout(() => {
+        isLoggingIn.value = false;
+        isRedirecting.value = false;
+        router.push('/npsdashboard');
+      }, 2000);
+    } else {
+      // If not admin, try regular user login
+      const userCredential = await signInWithEmailAndPassword(auth, form.value.email, form.value.password);
+      console.log('User logged in:', userCredential.user);
 
-    clearInterval(progressInterval);
-    progress.value = 100;
-
-    setTimeout(() => {
-      isLoggingIn.value = false;
-      router.push('/dashboard');
-    }, 500);
-
+      isRedirecting.value = true;
+      setTimeout(() => {
+        isLoggingIn.value = false;
+        isRedirecting.value = false;
+        router.push('/dashboard');
+      }, 2000);
+    }
   } catch (err) {
     console.error('Login failed:', err.message);
-    clearInterval(progressInterval);
     isLoggingIn.value = false;
     error.value = 'Invalid email or password. Please try again.';
   }
 };
 
 const handleSignUp = () => {
-  isSigningUp.value = true;
-  setTimeout(() => {
-    router.push('/signup');
-  }, 1000);
+  router.push('/signup');
 };
 
 const closeModal = () => {
   error.value = '';
 };
+
+const goToLandingPage = () => {
+  router.push('/');
+};
 </script>
 
-<style>
+<style scoped>
 @keyframes gradient {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -176,3 +196,4 @@ const closeModal = () => {
   animation: gradient 3s ease infinite;
 }
 </style>
+

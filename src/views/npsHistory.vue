@@ -205,7 +205,7 @@
       <div class="bg-white rounded-lg p-8 max-w-2xl w-full">
         <h2 class="text-2xl font-semibold mb-4">Incident Details</h2>
         <div class="grid grid-cols-2 gap-4 mb-4">
-          <div>
+          <div>in
             <p class="font-medium">ID:</p>
             <p>{{ selectedIncident.id }}</p>
           </div>

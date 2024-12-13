@@ -12,6 +12,7 @@ import npsReports from '../views/npsReports.vue';
 import npsHistory from '../views/npsHistory.vue';
 import bfpDashboard from '../views/bfpDashboard.vue';
 import bfpReports from '../views/bfpReports.vue';
+import bfpFireman from '../views/bfpFireman.vue';
 import bfpHistory from '../views/bfpHistory.vue';
 import NPSLogin from '../views/NPSLogin.vue';
 import BFPLogin from '../views/BFPLogin.vue';
@@ -22,8 +23,11 @@ import firemanSignup from '../views/firemanSignup.vue';
 import firemanLogin from '../views/firemanLogin.vue';
 import firemanDashboard from '../views/firemanDashboard.vue';
 import bfpMap from '../views/bfpMap.vue';
+import npsPolice from '../views/npsPolice.vue';
+
 import landingPage from '../views/landingPage.vue';
 import pantryLang from '../views/pantryLang.vue';
+import trialList from '../views/trialList.vue';
 
 const routes = [
   { path: '/signup', name: 'userSignup', component: userSignup },
@@ -39,8 +43,10 @@ const routes = [
   { path: '/npshistory', name: 'npsHistory', component: npsHistory },
   { path: '/', name: 'landingPage', component: landingPage },
   { path: '/pantry', name: 'pantryLang', component: pantryLang },
+  { path: '/npspolice', name: 'npsPolice', component: npsPolice },
 
   { path: '/bfplogin', name: 'BFPLogin', component: BFPLogin },
+  { path: '/bfpfireman', name: 'bfpFireman', component: bfpFireman },
   { path: '/bfpmap', name: 'bfpMap', component: bfpMap },
   { path: '/bfpdashboard', name: 'bfpDashboard', component: bfpDashboard },
   { path: '/bfpreports', name: 'bfpReports', component: bfpReports },
@@ -52,6 +58,9 @@ const routes = [
   { path: '/firemandashboard', name: 'firemanDashboard', component: firemanDashboard },
   { path: '/firemansignup', name: 'firemanSignup', component: firemanSignup },
   { path: '/firemanlogin', name: 'firemanLogin', component: firemanLogin },
+
+
+  { path: '/trialist', name: 'trialList', component: trialList },
 ];
 
 

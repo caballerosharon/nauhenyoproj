@@ -10,12 +10,12 @@
           </div>
 
           <!-- Navigation Items -->
-          <nav class="flex-1 flex justify-center space-x-8">
+          <nav class="flex-1 flex justify-center">
             <router-link
               v-for="(item, index) in navItems"
               :key="index"
               :to="item.path"
-              class="flex flex-col items-center group px-4 hover:text-teal-600 transition-colors duration-300"
+              class="flex flex-col items-center group px-8 mx-2 hover:text-teal-600 transition-colors duration-300"
             >
               <div class="flex flex-col items-center">
                 <component 
@@ -379,3 +379,4 @@ watch(() => auth.currentUser, (newUser) => {
   transition-duration: 300ms;
 }
 </style>
+

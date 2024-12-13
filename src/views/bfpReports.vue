@@ -115,7 +115,7 @@
           <X class="h-6 w-6" />
         </button>
         <h2 class="text-2xl font-bold mb-4">Fire Incident Report</h2>
-        <div class="grid grid-cols-2 gap-4 mb-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div>
             <p><strong>ID:</strong> {{ selectedReport.id }}</p>
             <p><strong>Incident Type:</strong> {{ selectedReport.incidentType }}</p>
@@ -126,13 +126,13 @@
           </div>
           <div>
             <p><strong>Description:</strong></p>
-            <p>{{ selectedReport.description }}</p>
+            <p class="text-sm text-gray-600">{{ selectedReport.description }}</p>
           </div>
         </div>
         <div v-if="selectedReport.photoURL" class="mb-4">
           <img :src="selectedReport.photoURL" alt="Incident Photo" class="max-w-full h-auto rounded-lg">
         </div>
-        <div class="flex justify-end space-x-4">
+        <div class="flex flex-wrap justify-end space-x-2 space-y-2">
           <button v-if="selectedReport.status === 'Pending' || !selectedReport.status" @click="approveReport" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
             Approve
           </button>
@@ -145,6 +145,9 @@
           <button v-if="selectedReport.status === 'Approved'" @click="setReportStatus('In Progress')" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">
             Set to In Progress
           </button>
+          <button v-if="['In Progress', 'Resolved'].includes(selectedReport.status)" @click="openAssignModal(selectedReport)" class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600">
+            Assign Firefighter
+          </button>
         </div>
       </div>
     </div>
@@ -153,17 +156,24 @@
     <div v-if="showAssignModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-lg p-8 max-w-md w-full">
         <h2 class="text-2xl font-bold mb-4">Assign Firefighter</h2>
-        <select v-model="selectedFirefighter" class="w-full p-2 border rounded mb-4">
-          <option value="">Select a firefighter</option>
-          <option v-for="firefighter in firefighterStore.firefighters" :key="firefighter.id" :value="firefighter.uid">
-            {{ firefighter.fullname }}
-          </option>
-        </select>
+        <div class="mb-4">
+          <label for="firefighter-select" class="block text-sm font-medium text-gray-700 mb-2">Select a firefighter</label>
+          <select 
+            id="firefighter-select"
+            v-model="selectedFirefighter" 
+            class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="">Choose a firefighter</option>
+            <option v-for="firefighter in firefighterStore.firefighters" :key="firefighter.id" :value="firefighter.uid">
+              {{ firefighter.fullname }}
+            </option>
+          </select>
+        </div>
         <div class="flex justify-end space-x-4">
-          <button @click="assignFirefighter" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+          <button @click="assignFirefighter" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
             Assign
           </button>
-          <button @click="closeAssignModal" class="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
+          <button @click="closeAssignModal" class="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
             Cancel
           </button>
         </div>
@@ -226,7 +236,7 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import { ChevronLeft, Menu, Bell, Settings, Eye, UserPlus, X, LayoutDashboard, FileText, History, BarChart2 } from "lucide-vue-next";
+import { ChevronLeft, Menu, Bell, Settings, Eye, UserPlus, X, LayoutDashboard, FileText, History, BarChart2, Users } from "lucide-vue-next";
 import { useFireReportStore } from "@/stores/fireReportStore";
 import { useFirefighterStore } from "@/stores/firefighterStore";
 import { TransitionRoot, TransitionChild, Dialog, DialogPanel, DialogTitle } from '@headlessui/vue'
@@ -312,6 +322,7 @@ const formatDate = (date) => {
 const navigationItems = [
   { name: "Dashboard", icon: LayoutDashboard, path: "/bfpdashboard", active: false },
   { name: "Fire Reports", icon: FileText, path: "/bfpreports", active: true },
+  { name: "Firefighters", icon: Users, path: "/bfpfireman", active: false },
   { name: "Incident History", icon: History, path: "/bfphistory", active: false },
   { name: "Fire Analytics", icon: BarChart2, path: "/bfpmap", active: false },
 ];
@@ -333,4 +344,3 @@ onMounted(async () => {
   opacity: 0;
 }
 </style>
-
