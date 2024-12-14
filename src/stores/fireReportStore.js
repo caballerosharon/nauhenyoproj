@@ -1,18 +1,109 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { db } from '../firebase/config';
-import { collection, query, orderBy, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, getDocs } from 'firebase/firestore';
+import { db, auth } from '../firebase/config';
+import { 
+  collection, 
+  query, 
+  orderBy, 
+  onSnapshot, 
+  addDoc, 
+  updateDoc, 
+  doc, 
+  serverTimestamp, 
+  getDocs,
+  arrayUnion,
+  arrayRemove 
+} from 'firebase/firestore';
+import { requestNotificationPermission, onMessageListener } from '../firebase/messaging';
 
 export const useFireReportStore = defineStore('fireReport', () => {
   const fireReports = ref([]);
   const recentFireReports = ref([]);
   const notifications = ref([]);
   const unreadNotificationsCount = ref(0);
+  const fcmToken = ref(null);
 
   const totalFireReports = computed(() => fireReports.value.length);
   const pendingFireReports = computed(() => fireReports.value.filter(report => report.status === 'Pending').length);
   const resolvedFireReports = computed(() => fireReports.value.filter(report => report.status === 'Resolved').length);
   const unassignedFireReports = computed(() => fireReports.value.filter(report => !report.assignedTo).length);
+
+  const initializePushNotifications = async () => {
+    try {
+      const token = await requestNotificationPermission();
+      if (token) {
+        fcmToken.value = token;
+        await updateUserFCMToken(token);
+        setupMessageListener();
+      }
+    } catch (error) {
+      console.error('Failed to initialize push notifications:', error);
+    }
+  };
+
+  const updateUserFCMToken = async (token) => {
+    if (!auth.currentUser) return;
+    
+    try {
+      const userRef = doc(db, 'users', auth.currentUser.uid);
+      await updateDoc(userRef, {
+        fcmTokens: arrayUnion(token)
+      });
+    } catch (error) {
+      console.error('Error updating FCM token:', error);
+    }
+  };
+
+  const removeFCMToken = async () => {
+    if (!auth.currentUser || !fcmToken.value) return;
+    
+    try {
+      const userRef = doc(db, 'users', auth.currentUser.uid);
+      await updateDoc(userRef, {
+        fcmTokens: arrayRemove(fcmToken.value)
+      });
+      fcmToken.value = null;
+    } catch (error) {
+      console.error('Error removing FCM token:', error);
+    }
+  };
+
+  const setupMessageListener = () => {
+    onMessageListener().then((payload) => {
+      console.log('Received foreground message:', payload);
+      
+      if (payload.notification) {
+        addNotification({
+          title: payload.notification.title,
+          body: payload.notification.body,
+          data: payload.data
+        });
+      }
+    }).catch(err => console.log('Failed to receive foreground message:', err));
+  };
+
+  const addNotification = (notification) => {
+    const newNotification = {
+      id: Date.now().toString(),
+      title: notification.title || 'New Notification',
+      body: notification.body,
+      data: notification.data,
+      read: false,
+      timestamp: new Date(),
+    };
+    
+    notifications.value.unshift(newNotification);
+    updateUnreadCount();
+    
+    if (auth.currentUser) {
+      const userRef = doc(db, 'users', auth.currentUser.uid);
+      updateDoc(userRef, {
+        notifications: arrayUnion(newNotification)
+      }).catch(error => {
+        console.error('Error storing notification:', error);
+      });
+    }
+  };
 
   const fetchFireReports = async () => {
     const q = query(collection(db, 'fireReports'), orderBy('dateTime', 'desc'));
@@ -21,7 +112,11 @@ export const useFireReportStore = defineStore('fireReport', () => {
         if (change.type === 'added') {
           const report = { id: change.doc.id, ...change.doc.data() };
           fireReports.value.unshift(report);
-          addNotification(report);
+          addNotification({
+            title: 'New Fire Report',
+            body: `A new fire incident has been reported at ${report.location}`,
+            data: { reportId: report.id }
+          });
         } else if (change.type === 'modified') {
           const index = fireReports.value.findIndex(r => r.id === change.doc.id);
           if (index !== -1) {
@@ -108,18 +203,6 @@ export const useFireReportStore = defineStore('fireReport', () => {
       console.error('Error adding document: ', error);
       throw error;
     }
-  };
-
-  const addNotification = (report) => {
-    const newNotification = {
-      id: report.id,
-      title: 'New Fire Report',
-      body: `A new fire incident has been reported at ${report.location}`,
-      read: false,
-      timestamp: new Date(),
-    };
-    notifications.value.unshift(newNotification);
-    updateUnreadCount();
   };
 
   const markNotificationAsRead = (notificationId) => {
@@ -209,5 +292,10 @@ export const useFireReportStore = defineStore('fireReport', () => {
     assignFirefighter,
     setFireReports,
     setRecentFireReports,
+    initializePushNotifications,
+    removeFCMToken,
+    fcmToken,
+    addNotification
   };
 });
+
