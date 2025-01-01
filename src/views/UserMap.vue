@@ -1,83 +1,50 @@
 <template>
-  <div class="min-h-screen bg-gray-100 text-gray-800 font-poppins relative">
-    <!-- Header with Navigation -->
-    <header class="bg-white shadow-neu-bottom fixed top-0 w-full z-20">
-      <!-- Main Navigation -->
-      <div class="flex items-center justify-between px-4 h-16 border-b border-gray-100">
-        <div class="flex items-center space-x-2">
-          <img src="@/assets/naulogo.png" alt="NauHenyo" class="h-8 w-8" />
-        </div>
-
-        <!-- Navigation Links -->
-        <nav class="flex items-center justify-center flex-1">
-          <div class="flex items-center space-x-8">
-            <router-link
-              v-for="item in navItems"
-              :key="item.path"
-              :to="item.path"
-              class="flex flex-col items-center px-4 py-1 rounded-lg transition-all duration-300"
-              :class="{
-                'text-teal-600 bg-teal-50': $route.path === item.path,
-                'text-gray-600 hover:text-teal-600 hover:bg-gray-50': $route.path !== item.path
-              }"
-            >
-              <component :is="item.icon" class="w-5 h-5" />
-              <span class="text-xs mt-1">{{ item.label }}</span>
-            </router-link>
+  <div class="min-h-screen bg-gray-100 text-gray-800 font-poppins relative pb-16">
+    <!-- Header -->
+    <header class="bg-white shadow-neu-header fixed top-0 w-full z-20">
+      <div class="max-w-7xl mx-auto px-4">
+        <div class="flex items-center justify-between h-16">
+          <!-- Logo -->
+          <div class="flex items-center">
+            <img src="@/assets/naulogo.png" alt="NauHenyo" class="h-8 w-8" />
+            <h1 class="ml-3 text-xl font-semibold text-gray-800">User Map</h1>
           </div>
-        </nav>
 
-        <div class="flex items-center space-x-4">
-          <router-link
-            to="/profile"
-            class="p-2 text-gray-600 hover:text-teal-600 rounded-full hover:bg-gray-100 transition-all duration-300"
-          >
-            <UserCircle class="w-6 h-6" />
-          </router-link>
-        </div>
-      </div>
-
-      <!-- Sub Header with Search and View Toggle -->
-      <div class="px-4 py-3 flex items-center justify-between bg-white">
-        <h2 class="text-xl font-semibold text-gray-800">My Reports History</h2>
-
-        <!-- Search Bar -->
-        <div class="flex-1 max-w-xl mx-4">
-          <div class="relative">
-            <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              ref="searchInput"
-              placeholder="Search locations or reports..."
-              class="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-gray-800 shadow-neu-inner"
-              v-model="searchQuery"
-              @keydown.enter="handleSearch"
-            />
+          <!-- Profile -->
+          <div class="flex items-center">
+            <div class="relative">
+              <button
+                @click="toggleDropdown"
+                class="flex items-center space-x-2 hover:bg-gray-100 p-2 rounded-lg transition-all duration-300"
+              >
+                <UserCircle class="w-6 h-6 text-gray-600" />
+              </button>
+              <div
+                v-if="isDropdownOpen"
+                class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50"
+              >
+                <router-link
+                  to="/profile"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  @click="isDropdownOpen = false"
+                >
+                  Profile
+                </router-link>
+                <button
+                  @click="openLogoutModal"
+                  class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Log out
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
-
-        <!-- View Toggle -->
-        <div class="flex bg-gray-100 rounded-lg p-1 shadow-neu-inner">
-          <button
-            v-for="view in viewOptions"
-            :key="view.id"
-            @click="toggleView(view.id)"
-            :class="[
-              'px-3 py-1 rounded-md text-sm transition-all duration-200 shadow-neu',
-              currentView === view.id
-                ? 'bg-white text-teal-600'
-                : 'text-gray-600 hover:bg-gray-300'
-            ]"
-          >
-            <component :is="view.icon" class="w-4 h-4 inline-block mr-1" />
-            {{ view.label }}
-          </button>
         </div>
       </div>
     </header>
 
     <!-- Main Content -->
-    <main class="pt-32 pb-8 px-4 md:px-6 lg:px-8">
+    <main class="pt-20 pb-24 px-4 md:px-6 lg:px-8">
       <div class="max-w-8xl mx-auto">
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <!-- Stats Panel -->
@@ -157,12 +124,69 @@
           <!-- Map Container -->
           <div class="lg:col-span-3">
             <div class="bg-white rounded-lg shadow-neu p-6 border border-gray-200">
+              <!-- Search and View Toggle -->
+              <div class="flex items-center justify-between mb-4">
+                <!-- Search Bar -->
+                <div class="flex-1 max-w-xl relative">
+                  <Search class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input
+                    type="text"
+                    ref="searchInput"
+                    placeholder="Search locations or reports..."
+                    class="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-gray-800 shadow-neu-inner"
+                    v-model="searchQuery"
+                    @keydown.enter="handleSearch"
+                  />
+                </div>
+
+                <!-- View Toggle -->
+                <div class="flex bg-gray-100 rounded-lg p-1 shadow-neu-inner ml-4">
+                  <button
+                    v-for="view in viewOptions"
+                    :key="view.id"
+                    @click="toggleView(view.id)"
+                    :class="[
+                      'px-3 py-1 rounded-md text-sm transition-all duration-200 shadow-neu',
+                      currentView === view.id
+                        ? 'bg-white text-teal-600'
+                        : 'text-gray-600 hover:bg-gray-300'
+                    ]"
+                  >
+                    <component :is="view.icon" class="w-4 h-4 inline-block mr-1" />
+                    {{ view.label }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Map -->
               <div id="map" class="w-full h-[600px] rounded-lg shadow-neu-inner"></div>
             </div>
           </div>
         </div>
       </div>
     </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 shadow-neu-bottom z-50">
+      <div class="max-w-screen-xl mx-auto">
+        <div class="flex justify-between h-16">
+          <router-link
+            v-for="(item, index) in navItems"
+            :key="index"
+            :to="item.path"
+            class="flex flex-col items-center justify-center w-full hover:bg-gray-50 transition-all duration-300"
+            :class="$route.path === item.path ? 'text-teal-600' : 'text-gray-600'"
+          >
+            <component 
+              :is="item.icon" 
+              class="w-6 h-6 mb-1"
+              :class="$route.path === item.path ? 'text-teal-600' : 'text-gray-600'"
+            />
+            <span class="text-xs">{{ item.label }}</span>
+          </router-link>
+        </div>
+      </div>
+    </nav>
 
     <!-- Hover Preview Card -->
     <div
@@ -174,13 +198,31 @@
       <p class="text-sm mt-1 text-gray-600">{{ hoveredReport.subType }}</p>
       <p class="text-sm text-gray-400">{{ formatDate(hoveredReport.timestamp) }}</p>
     </div>
+
+    <!-- Logout Modal -->
+    <div v-if="isLogoutModalOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white p-6 rounded-lg shadow-lg">
+        <h2 class="text-xl font-semibold mb-4">Confirm Logout</h2>
+        <p class="mb-6">Are you sure you want to log out?</p>
+        <div class="flex justify-end space-x-4">
+          <button @click="closeLogoutModal" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
+            Cancel
+          </button>
+          <button @click="logout" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db, auth } from '../firebase/config';
+import { signOut } from 'firebase/auth';
 import {
   LayoutDashboard,
   FileText,
@@ -192,6 +234,8 @@ import {
   Map as MapIcon,
   Activity
 } from 'lucide-vue-next';
+
+const router = useRouter();
 
 // Declare google as a global variable to avoid ESLint errors
 /* global google */
@@ -243,6 +287,33 @@ const navItems = [
   { path: '/usermap', icon: MapPin, label: 'Map' },
   { path: '/history', icon: FolderOpen, label: 'My Reports' }
 ];
+
+// Dropdown and logout
+const isDropdownOpen = ref(false);
+const isLogoutModalOpen = ref(false);
+
+const toggleDropdown = () => {
+  isDropdownOpen.value = !isDropdownOpen.value;
+};
+
+const openLogoutModal = () => {
+  isDropdownOpen.value = false;
+  isLogoutModalOpen.value = true;
+};
+
+const closeLogoutModal = () => {
+  isLogoutModalOpen.value = false;
+};
+
+const logout = async () => {
+  try {
+    await signOut(auth);
+    closeLogoutModal();
+    router.push('/login');
+  } catch (error) {
+    console.error('Error logging out:', error);
+  }
+};
 
 // Initialize map
 const initMap = () => {

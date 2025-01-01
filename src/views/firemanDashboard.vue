@@ -1,276 +1,365 @@
 <template>
-  <div class="flex h-screen bg-gray-100 overflow-hidden font-poppins">
-    <!-- Sidebar -->
-    <aside :class="[
-      'bg-[#070b0d] flex flex-col fixed inset-y-0 left-0 z-20 overflow-y-auto transition-all duration-300 ease-in-out',
-      isSidebarCollapsed ? 'w-16' : 'w-64'
-    ]">
-      <!-- Logo -->
-      <div class="flex items-center justify-center h-16 bg-[#070b0d]">
-        <div class="flex items-center">
-          <svg class="w-8 h-8 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"></path>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z"></path>
-          </svg>
-          <span v-if="!isSidebarCollapsed" class="ml-2 text-white font-semibold">BFP</span>
-        </div>
-      </div>
-
-      <!-- Navigation Items -->
-      <nav class="flex-1 px-2 py-4">
-        <ul>
-          <li v-for="item in navigationItems" :key="item.name" class="mb-2">
-            <a :href="item.path" :class="[
-              'flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200',
-              item.active ? 'bg-[#002855] text-white' : 'text-gray-300 hover:bg-[#002855] hover:text-white'
-            ]">
-              <component :is="item.icon" :class="['h-6 w-6', isSidebarCollapsed ? 'mr-0' : 'mr-3']" />
-              <span :class="{ 'hidden': isSidebarCollapsed, 'ml-3': !isSidebarCollapsed }">
-                {{ item.name }}
-              </span>
-            </a>
-          </li>
-        </ul>
-      </nav>
-    </aside>
-
-    <!-- Main Content Panel -->
-    <main :class="['flex-1 flex flex-col fixed inset-0 z-10 overflow-hidden bg-gray-100 transition-all duration-300 ease-in-out', isSidebarCollapsed ? 'ml-16' : 'ml-64']">
-      <!-- Top Bar -->
-      <div class="bg-[#070b0d] text-white p-4 flex items-center justify-between">
-        <div class="flex items-center">
-          <button @click="toggleSidebar" class="p-1 mr-4 rounded-full hover:bg-gray-700 transition-colors duration-200">
-            <Menu v-if="isSidebarCollapsed" class="h-6 w-6" />
-            <ChevronLeft v-else class="h-6 w-6" />
-          </button>
-          <h1 class="text-xl font-semibold">Firefighter Dashboard</h1>
-        </div>
-        <div class="flex items-center space-x-4 relative">
-          <!-- Notification Bell -->
-          <button @click="toggleNotificationModal" class="relative p-1 rounded-full hover:bg-gray-700 transition-colors duration-200">
-            <Bell class="h-6 w-6" />
-            <span v-if="unreadNotificationsCount > 0" class="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold rounded-full w-4 h-4 flex items-center justify-center">
-              {{ unreadNotificationsCount }}
-            </span>
-          </button>
-          <button class="p-1 rounded-full hover:bg-gray-700 transition-colors duration-200">
-            <Settings class="h-6 w-6" />
-          </button>
-        </div>
-      </div>
-
-      <!-- Notification Modal -->
-      <div v-if="isNotificationModalOpen" class="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
-        <div class="bg-white rounded-lg shadow-lg max-w-lg w-full p-6">
-          <div class="flex justify-between items-center mb-4">
-            <h2 class="text-lg font-semibold">Notifications</h2>
-            <button @click="toggleNotificationModal" class="text-gray-500 hover:text-gray-700">
-              <X class="w-6 h-6" />
+  <div class="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+    <!-- Header with Navigation -->
+    <header class="bg-gradient-to-r from-orange-600 to-red-600 fixed top-0 left-0 right-0 z-50 shadow-lg">
+      <div class="container mx-auto px-6 py-4">
+        <div class="flex justify-between items-center">
+          <div class="flex items-center">
+            <Flame class="h-8 w-8 mr-3 text-yellow-300" />
+            <h1 class="text-2xl font-bold">Fireman Dashboard</h1>
+          </div>
+          <nav>
+            <ul class="flex space-x-6">
+              <li v-for="item in navItems" :key="item.name">
+                <a :href="item.href" class="text-white hover:text-yellow-300 transition-colors duration-200">{{ item.name }}</a>
+              </li>
+            </ul>
+          </nav>
+          <div class="flex items-center space-x-4">
+            <button class="text-white hover:text-yellow-300 transition-colors duration-200">
+              <Bell class="h-6 w-6" />
+            </button>
+            <div v-if="currentFirefighter" class="flex items-center bg-black/20 rounded-full px-4 py-1">
+              <UserCircle class="h-6 w-6 mr-2 text-yellow-300" />
+              <span>{{ currentFirefighter.name }}</span>
+            </div>
+            <button @click="logout" class="bg-black/20 hover:bg-black/30 px-4 py-1 rounded-full transition-colors duration-200">
+              Logout
             </button>
           </div>
-          <ul class="space-y-4 max-h-96 overflow-y-auto">
-            <li v-for="notification in notifications" :key="notification.id" 
-                :class="['flex justify-between items-center p-2 rounded', 
-                         notification.read ? 'bg-white' : 'bg-blue-50']">
-              <div>
-                <p class="text-sm font-medium">{{ notification.title }}</p>
-                <p class="text-xs text-gray-500">{{ notification.body }}</p>
-                <p class="text-xs text-gray-400">{{ formatDate(notification.timestamp) }}</p>
-              </div>
-              <button v-if="!notification.read" @click="markAsRead(notification.id)" class="text-xs font-bold text-blue-500 hover:underline">
-                Mark as Read
-              </button>
-            </li>
-            <li v-if="notifications.length === 0" class="text-sm text-gray-500">No notifications available.</li>
-          </ul>
-          <div class="mt-4 flex justify-between">
-            <button @click="clearAllNotifications" class="text-sm text-red-500 hover:underline">Clear Read Notifications</button>
-            <button @click="markAllAsRead" class="text-sm text-blue-500 hover:underline">Mark All as Read</button>
-          </div>
         </div>
       </div>
+    </header>
 
-      <!-- Scrollable content -->
-      <div class="flex-1 overflow-y-auto p-8">
-        <!-- Metrics Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-          <div v-for="metric in metrics" :key="metric.title" 
-               class="bg-white bg-opacity-80 p-8 rounded-2xl shadow-lg backdrop-blur-sm transition-all duration-300 hover:bg-opacity-100">
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-gray-500 text-lg mb-2">{{ metric.title }}</p>
-                <h3 class="text-4xl font-bold text-[#002855]">{{ metric.value }}</h3>
-              </div>
-              <component :is="metric.icon" 
-                        class="w-16 h-16 text-[#002855] opacity-20" />
+    <!-- Fixed Panel containing main content -->
+    <div class="fixed top-[73px] left-0 right-0 bottom-0 overflow-auto">
+      <div class="container mx-auto px-6 py-8">
+        <!-- Firefighter Details -->
+        <div v-if="currentFirefighter" class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 shadow-xl border border-gray-700 mb-8">
+          <h2 class="text-2xl font-bold mb-4">Firefighter Details</h2>
+          <p><strong>Name:</strong> {{ currentFirefighter.name }}</p>
+          <p><strong>ID:</strong> {{ currentFirefighter.id }}</p>
+          <p><strong>Rank:</strong> {{ currentFirefighter.rank }}</p>
+          <p><strong>Station:</strong> {{ currentFirefighter.station }}</p>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 shadow-xl border border-gray-700">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-gray-400">Assigned Reports</h3>
+              <Activity class="h-5 w-5 text-orange-400" />
+            </div>
+            <div class="text-3xl font-bold mb-2">{{ assignedReports.length }}</div>
+            <div class="text-sm text-gray-400">All time</div>
+          </div>
+          
+          <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 shadow-xl border border-gray-700">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-gray-400">Pending Reports</h3>
+              <FireExtinguisher class="h-5 w-5 text-orange-400" />
+            </div>
+            <div class="text-3xl font-bold mb-2">{{ pendingReports.length }}</div>
+            <div class="text-sm text-gray-400">Awaiting action</div>
+          </div>
+          
+          <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 shadow-xl border border-gray-700">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-gray-400">Resolved Reports</h3>
+              <Users class="h-5 w-5 text-orange-400" />
+            </div>
+            <div class="text-3xl font-bold mb-2">{{ resolvedReports.length }}</div>
+            <div class="text-sm text-gray-400">Completed incidents</div>
+          </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <!-- Incident Types Pie Chart -->
+          <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 shadow-xl border border-gray-700">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-xl font-semibold">Incident Types</h2>
+              <button class="text-gray-400 hover:text-white">
+                <MoreHorizontal class="h-5 w-5" />
+              </button>
+            </div>
+            <div class="h-[300px]">
+              <canvas ref="incidentTypesChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Incidents Over Time Bar Chart -->
+          <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 shadow-xl border border-gray-700">
+            <div class="flex items-center justify-between mb-6">
+              <h2 class="text-xl font-semibold">Incidents Over Time</h2>
+              <button class="text-gray-400 hover:text-white">
+                <MoreHorizontal class="h-5 w-5" />
+              </button>
+            </div>
+            <div class="h-[300px]">
+              <canvas ref="incidentsOverTimeChart"></canvas>
             </div>
           </div>
         </div>
 
-        <!-- Fire Incident Distribution Chart -->
-        <div v-if="incidentTypesData.labels && incidentTypesData.datasets.length" class="bg-white bg-opacity-80 p-8 rounded-2xl shadow-lg backdrop-blur-sm mb-8">
-          <h3 class="text-2xl font-semibold mb-6 text-[#002855]">Fire Incident Distribution</h3>
-          <div class="h-[400px]">
-            <Doughnut :data="incidentTypesData" :options="chartOptions" />
+        <!-- Recent Fire Reports -->
+        <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 shadow-xl border border-gray-700">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-semibold">Recent Fire Reports</h2>
+            <button class="text-gray-400 hover:text-white">
+              <MoreHorizontal class="h-5 w-5" />
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="text-gray-400 border-b border-gray-700">
+                  <th class="pb-3 text-left">Date</th>
+                  <th class="pb-3 text-left">Type</th>
+                  <th class="pb-3 text-left">Location</th>
+                  <th class="pb-3 text-left">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="report in recentAssignedReports" :key="report.id" 
+                    class="border-b border-gray-700/50 text-sm">
+                  <td class="py-3">{{ formatDate(report.timestamp) }}</td>
+                  <td class="py-3">{{ report.type }}</td>
+                  <td class="py-3">{{ report.location }}</td>
+                  <td class="py-3">
+                    <span :class="{
+                      'px-2 py-1 rounded-full text-xs font-medium': true,
+                      'bg-green-400/20 text-green-400': report.status === 'resolved',
+                      'bg-yellow-400/20 text-yellow-400': report.status === 'in-progress',
+                      'bg-red-400/20 text-red-400': report.status === 'pending'
+                    }">
+                      {{ report.status }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
-    </main>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { storeToRefs } from 'pinia';
+import { ref, onMounted, computed, watch } from 'vue';
+import { 
+  Flame, UserCircle, Activity, FireExtinguisher, 
+  MoreHorizontal, Bell, Users
+} from 'lucide-vue-next';
+import Chart from 'chart.js/auto';
+import { useRouter } from 'vue-router';
+import { useFirefighterStore } from '@/stores/firefighterStore';
 import { useFireReportStore } from '@/stores/fireReportStore';
-import { LayoutDashboard, FileText, History, User, Menu, ChevronLeft, Bell, Settings, X } from 'lucide-vue-next';
-import { Doughnut } from 'vue-chartjs';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 
-ChartJS.register(ArcElement, Tooltip, Legend);
-
+const router = useRouter();
+const firefighterStore = useFirefighterStore();
 const fireReportStore = useFireReportStore();
-const { notifications, unreadNotificationsCount, fireReports } = storeToRefs(fireReportStore);
 
-const isSidebarCollapsed = ref(false);
-const isNotificationModalOpen = ref(false);
+const incidentTypesChart = ref(null);
+const incidentsOverTimeChart = ref(null);
 
-const toggleSidebar = () => {
-  isSidebarCollapsed.value = !isSidebarCollapsed.value;
-};
+const currentFirefighter = computed(() => firefighterStore.currentFirefighter);
 
-const toggleNotificationModal = () => {
-  isNotificationModalOpen.value = !isNotificationModalOpen.value;
-};
-
-const markAsRead = (notificationId) => {
-  fireReportStore.markNotificationAsRead(notificationId);
-};
-
-const markAllAsRead = () => {
-  fireReportStore.markAllNotificationsAsRead();
-};
-
-const clearAllNotifications = () => {
-  fireReportStore.clearNotifications();
-};
-
-const navigationItems = [
-  { name: 'Dashboard', icon: LayoutDashboard, path: '/bfpdashboard', active: true },
-  { name: 'Fire Reports', icon: FileText, path: '/bfpreports', active: false },
-  { name: 'My History', icon: History, path: '/bfphistory', active: false },
-  { name: 'Profile', icon: User, path: '#', active: false },
+const navItems = [
+  { name: 'Dashboard', href: '#' },
+  { name: 'Assigned Tasks', href: '#' },
+  { name: 'Reports', href: '#' },
+  { name: 'Performance', href: '#' },
 ];
 
-const metrics = computed(() => [
-  { title: 'Total Fire Incidents', value: fireReportStore.totalFireReports, icon: Bell },
-  { title: 'Assigned Fire Reports', value: fireReportStore.unassignedFireReports, icon: Settings },
-]);
-
-const formatDate = (date) => {
-  if (date instanceof Date) {
-    return date.toLocaleString();
-  }
-  return 'Invalid Date';
-};
-
-const incidentTypesData = computed(() => {
-  const typeCounts = fireReports.value.reduce((acc, report) => {
-    const type = report.incidentType || 'Unknown';
-    acc[type] = (acc[type] || 0) + 1;
-    return acc;
-  }, {});
-
-  return {
-    labels: Object.keys(typeCounts),
-    datasets: [
-      {
-        data: Object.values(typeCounts),
-        backgroundColor: [
-          'rgba(255, 99, 132, 0.8)',
-          'rgba(54, 162, 235, 0.8)',
-          'rgba(255, 206, 86, 0.8)',
-          'rgba(75, 192, 192, 0.8)',
-          'rgba(153, 102, 255, 0.8)',
-        ],
-        borderColor: [
-          'rgba(255, 99, 132, 1)',
-          'rgba(54, 162, 235, 1)',
-          'rgba(255, 206, 86, 1)',
-          'rgba(75, 192, 192, 1)',
-          'rgba(153, 102, 255, 1)',
-        ],
-        borderWidth: 1,
-      },
-    ],
-  };
+const assignedReports = computed(() => {
+  if (!currentFirefighter.value) return [];
+  return fireReportStore.fireReports.filter(report => report.assignedFirefighterId === currentFirefighter.value.id);
 });
 
-const chartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      position: 'right',
-    },
-    tooltip: {
-      backgroundColor: 'rgba(0, 0, 0, 0.8)',
-      titleColor: 'white',
-      bodyColor: 'white',
-      borderColor: 'white',
-      borderWidth: 1,
-      cornerRadius: 8,
-    },
-  },
-  cutout: '60%',
+const pendingReports = computed(() => assignedReports.value.filter(report => report.status === 'pending'));
+const resolvedReports = computed(() => assignedReports.value.filter(report => report.status === 'resolved'));
+const recentAssignedReports = computed(() => {
+  return [...assignedReports.value].sort((a, b) => b.timestamp - a.timestamp).slice(0, 5);
+});
+
+const formatDate = (date) => {
+  return new Date(date).toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+const logout = async () => {
+  await firefighterStore.logout();
+  router.push('/login');
+};
+
+const updateCharts = () => {
+  if (!currentFirefighter.value) return;
+
+  // Incident Types Pie Chart
+  const incidentTypes = computed(() => {
+    const types = {};
+    assignedReports.value.forEach(report => {
+      types[report.type] = (types[report.type] || 0) + 1;
+    });
+    return types;
+  });
+
+  if (incidentTypesChart.value) {
+    new Chart(incidentTypesChart.value, {
+      type: 'pie',
+      data: {
+        labels: Object.keys(incidentTypes.value),
+        datasets: [{
+          data: Object.values(incidentTypes.value),
+          backgroundColor: [
+            '#f97316',
+            '#fb923c',
+            '#fdba74',
+            '#fed7aa',
+            '#ffedd5'
+          ],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              color: 'rgba(255, 255, 255, 0.7)',
+              font: {
+                size: 12
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // Incidents Over Time Bar Chart
+  const incidentsOverTime = computed(() => {
+    const timeData = {};
+    assignedReports.value.forEach(report => {
+      const date = new Date(report.timestamp).toLocaleDateString();
+      timeData[date] = (timeData[date] || 0) + 1;
+    });
+    return timeData;
+  });
+
+  if (incidentsOverTimeChart.value) {
+    new Chart(incidentsOverTimeChart.value, {
+      type: 'bar',
+      data: {
+        labels: Object.keys(incidentsOverTime.value),
+        datasets: [{
+          label: 'Incidents',
+          data: Object.values(incidentsOverTime.value),
+          backgroundColor: '#f97316',
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: 'rgba(255, 255, 255, 0.1)',
+            },
+            ticks: {
+              color: 'rgba(255, 255, 255, 0.7)',
+            }
+          },
+          x: {
+            grid: {
+              color: 'rgba(255, 255, 255, 0.1)',
+            },
+            ticks: {
+              color: 'rgba(255, 255, 255, 0.7)',
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
+          }
+        }
+      }
+    });
+  }
 };
 
 onMounted(async () => {
-  const unsubscribe = await fireReportStore.fetchFireReports();
-  onUnmounted(() => {
-    unsubscribe(); // Clean up the Firestore listener when the component is unmounted
-  });
+  await firefighterStore.getCurrentFirefighter();
+  await fireReportStore.fetchFireReports();
+  updateCharts();
 });
+
+watch(currentFirefighter, updateCharts);
+watch(assignedReports, updateCharts, { deep: true });
 </script>
 
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-
-:root {
-  font-family: 'Poppins', sans-serif;
+<style scoped>
+.chart-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
 
-body {
-  margin: 0;
-  padding: 0;
+/* Custom scrollbar for modern browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-#app {
-  height: 100vh;
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
 }
 
-*, *::before, *::after {
-  box-sizing: border-box;
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
 }
 
-ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
-html {
-  scroll-behavior: smooth;
+/* Enhanced styling for charts */
+.chart-container canvas {
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
 }
 
-:focus-visible {
-  outline: 2px solid #070b0d;
-  outline-offset: 2px;
+.chart-container canvas:hover {
+  transform: scale(1.02);
 }
 
-@media (max-width: 640px) {
-  html {
-    font-size: 14px;
-  }
+/* Pie chart legend styling */
+.chart-container[data-type="pie"] .chartjs-legend li span {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 5px;
+  border-radius: 50%;
+}
+
+/* Bar chart styling */
+.chart-container[data-type="bar"] .chartjs-tooltip {
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  border-radius: 4px;
+  padding: 5px 10px;
 }
 </style>

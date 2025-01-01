@@ -150,16 +150,16 @@ export const useCrimeReportStore = defineStore('crimeReport', () => {
     }
   };
 
-  const assignFirefighter = async (reportId, firefighterId) => {
+  const assignPolice = async (reportId, policeId) => {
     try {
       const reportRef = doc(db, 'crimeReports', reportId);
       await updateDoc(reportRef, { 
-        assignedTo: firefighterId,
+        assignedTo: policeId,
         status: 'Resolved'  // Automatically set status to 'Resolved' when assigning
       });
       const index = crimeReports.value.findIndex(report => report.id === reportId);
       if (index !== -1) {
-        crimeReports.value[index].assignedTo = firefighterId;
+        crimeReports.value[index].assignedTo = policeId;
         crimeReports.value[index].status = 'Resolved';
       }
     } catch (error) {
@@ -185,6 +185,6 @@ export const useCrimeReportStore = defineStore('crimeReport', () => {
     markAllNotificationsAsRead,
     clearNotifications,
     updateReportStatus,
-    assignFirefighter,
+    assignPolice,
   };
 });

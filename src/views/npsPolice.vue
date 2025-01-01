@@ -2,11 +2,11 @@
   <div class="flex h-screen bg-gray-100 overflow-hidden font-poppins">
     <!-- Sidebar -->
     <aside :class="[
-      'bg-[#070b0d] flex flex-col fixed inset-y-0 left-0 z-20 overflow-y-auto transition-all duration-300 ease-in-out',
+      'bg-[#080838] flex flex-col fixed inset-y-0 left-0 z-20 overflow-y-auto transition-all duration-300 ease-in-out',
       isSidebarCollapsed ? 'w-16' : 'w-64'
     ]">
       <!-- Logo -->
-      <div class="flex items-center justify-center h-16 bg-black">
+      <div class="flex items-center justify-center h-16 bg-[#080838]">
         <div class="flex items-center">
           <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.618 5.984A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016zM12 9v2m0 4h.01"></path>
@@ -24,7 +24,7 @@
               item.active ? 'bg-[#002855] text-white' : 'text-gray-300 hover:bg-[#002855] hover:text-white'
             ]">
               <component :is="item.icon" :class="['h-6 w-6', isSidebarCollapsed ? 'mr-0' : 'mr-3']" />
-              <span v-if="!isSidebarCollapsed" class="ml-3">
+              <span :class="{ 'hidden': isSidebarCollapsed, 'ml-3': !isSidebarCollapsed }">
                 {{ item.name }}
               </span>
             </a>
@@ -33,10 +33,10 @@
       </nav>
     </aside>
 
-    <!-- Main Content -->
+    <!-- Main Content Panel -->
     <main :class="['flex-1 flex flex-col fixed inset-0 z-10 overflow-hidden bg-gray-100 transition-all duration-300 ease-in-out', isSidebarCollapsed ? 'ml-16' : 'ml-64']">
       <!-- Top Bar -->
-      <div class="bg-[#070b0d] text-white p-4 flex items-center justify-between">
+      <div class="bg-[#080838] text-white p-4 flex items-center justify-between">
         <div class="flex items-center">
           <button @click="toggleSidebar" class="p-1 mr-4 rounded-full hover:bg-gray-700 transition-colors duration-200">
             <Menu v-if="isSidebarCollapsed" class="h-6 w-6" />
@@ -797,7 +797,7 @@ const navigationItems = [
   { name: "Crime Reports", icon: FileText, path: "/npsreports", active: false },
   { name: "Police", icon: Users, path: "/npspolice", active: true },
   { name: "Incident History", icon: History, path: "/npshistory", active: false },
-  { name: "Crime Mapping", icon: BarChart2, path: "/npsmap", active: false },
+  { name: "Crime Analytics", icon: BarChart2, path: "/npsmap", active: false },
 ];
 
 const assignedCount = computed(() => 

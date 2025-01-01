@@ -22,7 +22,7 @@
           <li v-for="item in navigationItems" :key="item.name" class="mb-2">
             <a :href="item.path" :class="[
               'flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200',
-              item.active ? 'bg-[#002855] text-white' : 'text-gray-300 hover:bg-[#002855] hover:text-white'
+              item.active ? 'bg-[#f97316] text-white' : 'text-gray-300 hover:bg-[#333333] hover:text-white'
             ]">
               <component :is="item.icon" :class="['h-6 w-6', isSidebarCollapsed ? 'mr-0' : 'mr-3']" />
               <span v-if="!isSidebarCollapsed" class="ml-3">
@@ -59,12 +59,43 @@
       <div class="pt-20 p-8 flex-1 overflow-auto">
         <div class="bg-white rounded-lg shadow">
           <div class="p-6 border-b border-gray-200">
-            <h2 class="text-lg font-semibold text-[#002855]">Fire Incident Reports</h2>
+            <h2 class="text-lg font-semibold text-[#002855] mb-4">Fire Incident Reports</h2>
+
+            <!-- Search and Filter Section -->
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+              <!-- Search Input -->
+              <div class="flex-grow max-w-md">
+                <input
+                  v-model="searchQuery"
+                  type="text"
+                  placeholder="Search reports..."
+                  class="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <!-- Filter Buttons -->
+              <div class="flex flex-wrap gap-2">
+                <button
+                  v-for="status in ['All', 'Pending', 'In Progress', 'Resolved', 'Disapproved']"
+                  :key="status"
+                  @click="setStatusFilter(status)"
+                  :class="[
+                    'px-4 py-2 rounded-md text-sm font-medium',
+                    statusFilter === status
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  ]"
+                >
+                  {{ status }}
+                </button>
+              </div>
+            </div>
           </div>
           <div class="overflow-x-auto">
             <table class="min-w-full bg-white">
               <thead class="bg-gray-50">
                 <tr class="text-left text-sm text-gray-500">
+                  <th class="px-6 py-3 font-medium">Image</th>
                   <th class="px-6 py-3 font-medium">ID</th>
                   <th class="px-6 py-3 font-medium">Incident Type</th>
                   <th class="px-6 py-3 font-medium">Location</th>
@@ -74,7 +105,21 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="report in fireReportStore.fireReports" :key="report.id" class="border-t border-gray-100 hover:bg-gray-50">
+                <tr v-for="report in filteredAndSortedReports" :key="report.id" class="border-t border-gray-100 hover:bg-gray-50">
+                  <td class="px-6 py-4">
+                    <div class="w-16 h-16 rounded-lg overflow-hidden bg-gray-100">
+                      <img
+                        v-if="report.imagePaths && report.imagePaths.length > 0"
+                        :src="report.imagePaths[0]"
+                        :alt="report.incidentType"
+                        class="w-full h-full object-cover"
+                        @click="openImageModal(report.imagePaths[0])"
+                      />
+                      <div v-else class="w-full h-full flex items-center justify-center">
+                        <Flame class="w-8 h-8 text-gray-400" />
+                      </div>
+                    </div>
+                  </td>
                   <td class="px-6 py-4 font-medium text-gray-900">{{ report.id.slice(0, 8) }}</td>
                   <td class="px-6 py-4">{{ report.incidentType }}</td>
                   <td class="px-6 py-4">{{ report.location }}</td>
@@ -94,9 +139,11 @@
                     <button @click="viewReport(report)" class="text-blue-500 hover:text-blue-700 mr-2">
                       <Eye class="h-5 w-5" />
                     </button>
-                    <button @click="openAssignModal(report)" 
-                            :disabled="!['In Progress', 'Resolved'].includes(report.status)"
-                            :class="['text-green-500 hover:text-green-700', {'opacity-50 cursor-not-allowed': !['In Progress', 'Resolved'].includes(report.status)}]">
+                    <button
+                      @click="openAssignModal(report)"
+                      :disabled="!['Pending', 'In Progress'].includes(report.status)"
+                      :class="['text-green-500 hover:text-green-700', {'opacity-50 cursor-not-allowed': !['Pending', 'In Progress'].includes(report.status)}]"
+                    >
                       <UserPlus class="h-5 w-5" />
                     </button>
                   </td>
@@ -110,47 +157,133 @@
 
     <!-- View Report Modal -->
     <div v-if="selectedReport" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-lg p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto relative">
-        <button @click="closeViewModal" class="absolute top-2 right-2 text-gray-500 hover:text-gray-700">
-          <X class="h-6 w-6" />
-        </button>
-        <h2 class="text-2xl font-bold mb-4">Fire Incident Report</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <p><strong>ID:</strong> {{ selectedReport.id }}</p>
-            <p><strong>Incident Type:</strong> {{ selectedReport.incidentType }}</p>
-            <p><strong>Subcategory:</strong> {{ selectedReport.incidentSub }}</p>
-            <p><strong>Location:</strong> {{ selectedReport.location }}</p>
-            <p><strong>Date:</strong> {{ formatDate(selectedReport.dateTime) }}</p>
-            <p><strong>Status:</strong> {{ selectedReport.status }}</p>
-          </div>
-          <div>
-            <p><strong>Description:</strong></p>
-            <p class="text-sm text-gray-600">{{ selectedReport.description }}</p>
-          </div>
+      <div class="bg-white rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden">
+        <!-- Modal Header -->
+        <div class="bg-[#002B5B] text-white p-4 flex items-center justify-between">
+          <h2 class="text-xl font-semibold">Fire Incident Report</h2>
+          <button @click="closeViewModal" class="text-white hover:text-gray-200 transition-colors">
+            <X class="h-6 w-6" />
+          </button>
         </div>
-        <div v-if="selectedReport.photoURL" class="mb-4">
-          <img :src="selectedReport.photoURL" alt="Incident Photo" class="max-w-full h-auto rounded-lg">
-        </div>
-        <div class="flex flex-wrap justify-end space-x-2 space-y-2">
-          <button v-if="selectedReport.status === 'Pending' || !selectedReport.status" @click="approveReport" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
-            Approve
-          </button>
-          <button v-if="selectedReport.status === 'Pending' || !selectedReport.status" @click="disapproveReport" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-            Disapprove
-          </button>
-          <button v-if="selectedReport.status === 'In Progress'" @click="setReportStatus('Resolved')" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-            Mark as Resolved
-          </button>
-          <button v-if="selectedReport.status === 'Approved'" @click="setReportStatus('In Progress')" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">
-            Set to In Progress
-          </button>
-          <button v-if="['In Progress', 'Resolved'].includes(selectedReport.status)" @click="openAssignModal(selectedReport)" class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600">
-            Assign Firefighter
-          </button>
+
+        <!-- Modal Content -->
+        <div class="p-6 overflow-y-auto">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Left Column - Basic Information -->
+            <div class="md:col-span-2 space-y-6">
+              <div class="bg-gray-50 p-4 rounded-lg shadow">
+                <h3 class="text-lg font-semibold text-[#002B5B] mb-4">Basic Information</h3>
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <div class="text-sm font-medium text-gray-500">ID</div>
+                    <div class="mt-1">{{ selectedReport.id }}</div>
+                  </div>
+                  <div>
+                    <div class="text-sm font-medium text-gray-500">Status</div>
+                    <div class="mt-1">
+                      <span :class="{
+                        'px-2 py-1 rounded-full text-xs font-medium': true,
+                        'bg-yellow-100 text-yellow-800': selectedReport.status === 'Pending',
+                        'bg-blue-100 text-blue-800': selectedReport.status === 'In Progress',
+                        'bg-green-100 text-green-800': selectedReport.status === 'Resolved',
+                        'bg-red-100 text-red-800': selectedReport.status === 'Disapproved'
+                      }">
+                        {{ selectedReport.status }}
+                      </span>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="text-sm font-medium text-gray-500">Incident Type</div>
+                    <div class="mt-1">{{ selectedReport.incidentType }}</div>
+                  </div>
+                  <div>
+                    <div class="text-sm font-medium text-gray-500">Subcategory</div>
+                    <div class="mt-1">{{ selectedReport.incidentSub }}</div>
+                  </div>
+                  <div>
+                    <div class="text-sm font-medium text-gray-500">Location</div>
+                    <div class="mt-1">{{ selectedReport.location }}</div>
+                  </div>
+                  <div>
+                    <div class="text-sm font-medium text-gray-500">Date & Time</div>
+                    <div class="mt-1">{{ formatDate(selectedReport.dateTime) }}</div>
+                  </div>
+                  <div class="col-span-2">
+                    <div class="text-sm font-medium text-gray-500">Assigned Firefighter</div>
+                    <div class="mt-1 font-semibold text-[#002B5B]">
+                      {{ selectedReport.assignedTo || 'Not yet assigned' }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-gray-50 p-4 rounded-lg shadow">
+                <h3 class="text-lg font-semibold text-[#002B5B] mb-4">Description</h3>
+                <p class="text-gray-700">{{ selectedReport.description }}</p>
+              </div>
+            </div>
+
+            <!-- Right Column - Incident Photos -->
+            <div class="md:col-span-1">
+              <div class="bg-gray-50 p-4 rounded-lg shadow">
+                <h3 class="text-lg font-semibold text-[#002B5B] mb-4">Incident Photos</h3>
+                <div class="space-y-4">
+                  <template v-if="selectedReport.imagePaths && selectedReport.imagePaths.length > 0">
+                    <div v-for="(imagePath, index) in selectedReport.imagePaths"
+                         :key="index"
+                         class="relative rounded-lg overflow-hidden shadow-lg">
+                      <img
+                        :src="imagePath"
+                        :alt="`Incident Photo ${index + 1}`"
+                        class="w-full h-48 object-cover cursor-pointer"
+                        @click="openImageModal(imagePath)"
+                      />
+                    </div>
+                  </template>
+                  <div v-if="!selectedReport.imagePaths || selectedReport.imagePaths.length === 0"
+                       class="h-48 bg-gray-200 rounded-lg flex items-center justify-center">
+                    <div class="text-center text-gray-500">
+                      <Flame class="w-12 h-12 mx-auto mb-2" />
+                      <p>No images available</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="mt-6 flex flex-wrap justify-end gap-3">
+            <button v-if="selectedReport.status === 'Pending'"
+                    @click="approveReport"
+                    class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors">
+              Approve
+            </button>
+            <button v-if="selectedReport.status === 'Pending'"
+                    @click="disapproveReport"
+                    class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors">
+              Disapprove
+            </button>
+            <button v-if="selectedReport.status === 'In Progress'"
+                    @click="setReportStatus('Resolved')"
+                    class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
+              Mark as Resolved
+            </button>
+            <button v-if="selectedReport.status === 'Approved'"
+                    @click="setReportStatus('In Progress')"
+                    class="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-colors">
+              Set to In Progress
+            </button>
+            <button v-if="['Pending', 'In Progress'].includes(selectedReport.status)"
+                    @click="openAssignModal(selectedReport)"
+                    class="px-4 py-2 bg-[#002B5B] text-white rounded-md hover:bg-[#003872] transition-colors">
+              Assign Firefighter
+            </button>
+          </div>
         </div>
       </div>
     </div>
+
 
     <!-- Assign Firefighter Modal -->
     <div v-if="showAssignModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -158,13 +291,13 @@
         <h2 class="text-2xl font-bold mb-4">Assign Firefighter</h2>
         <div class="mb-4">
           <label for="firefighter-select" class="block text-sm font-medium text-gray-700 mb-2">Select a firefighter</label>
-          <select 
+          <select
             id="firefighter-select"
-            v-model="selectedFirefighter" 
+            v-model="selectedFirefighter"
             class="w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="">Choose a firefighter</option>
-            <option v-for="firefighter in firefighterStore.firefighters" :key="firefighter.id" :value="firefighter.uid">
+            <option v-for="firefighter in availableFirefighters" :key="firefighter.id" :value="firefighter">
               {{ firefighter.fullname }}
             </option>
           </select>
@@ -179,6 +312,47 @@
         </div>
       </div>
     </div>
+
+    <!-- Image Modal -->
+    <TransitionRoot appear :show="!!selectedImage" as="template">
+      <Dialog as="div" @close="closeImageModal" class="relative z-50">
+        <TransitionChild
+          as="template"
+          enter="duration-300 ease-out"
+          enter-from="opacity-0"
+          enter-to="opacity-100"
+          leave="duration-200 ease-in"
+          leave-from="opacity-100"
+          leave-to="opacity-0"
+        >
+          <div class="fixed inset-0 bg-black bg-opacity-75" />
+        </TransitionChild>
+
+        <div class="fixed inset-0 overflow-y-auto">
+          <div class="flex min-h-full items-center justify-center p-4">
+            <TransitionChild
+              as="template"
+              enter="duration-300 ease-out"
+              enter-from="opacity-0 scale-95"
+              enter-to="opacity-100 scale-100"
+              leave="duration-200 ease-in"
+              leave-from="opacity-100 scale-100"
+              leave-to="opacity-0 scale-95"
+            >
+              <DialogPanel class="w-full max-w-3xl transform overflow-hidden rounded-2xl bg-white p-1">
+                <img :src="selectedImage" alt="Enlarged incident photo" class="w-full h-auto" />
+                <button
+                  @click="closeImageModal"
+                  class="absolute top-2 right-2 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-75"
+                >
+                  <X class="h-6 w-6" />
+                </button>
+              </DialogPanel>
+            </TransitionChild>
+          </div>
+        </div>
+      </Dialog>
+    </TransitionRoot>
 
     <!-- Success Modal -->
     <TransitionRoot appear :show="showSuccessModal" as="template">
@@ -207,19 +381,24 @@
               leave-to="opacity-0 scale-95"
             >
               <DialogPanel class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900">
+                <div class="flex items-center justify-center mb-4">
+                  <div class="bg-green-100 rounded-full p-3">
+                    <CheckCircle class="h-8 w-8 text-green-600" />
+                  </div>
+                </div>
+                <DialogTitle as="h3" class="text-lg font-medium leading-6 text-gray-900 text-center">
                   Responder Assigned Successfully
                 </DialogTitle>
                 <div class="mt-2">
-                  <p class="text-sm text-gray-500">
-                    The responder has been successfully assigned to the fire incident report.
+                  <p class="text-sm text-gray-500 text-center">
+                    The responder has been successfully assigned to the fire incident report and the report status has been updated to Resolved.
                   </p>
                 </div>
 
-                <div class="mt-4">
+                <div class="mt-4 flex justify-center">
                   <button
                     type="button"
-                    class="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                    class="inline-flex justify-center rounded-md border border-transparent bg-green-100 px-4 py-2 text-sm font-medium text-green-900 hover:bg-green-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 transition-colors duration-200"
                     @click="closeSuccessModal"
                   >
                     Got it, thanks!
@@ -235,8 +414,23 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
-import { ChevronLeft, Menu, Bell, Settings, Eye, UserPlus, X, LayoutDashboard, FileText, History, BarChart2, Users } from "lucide-vue-next";
+import { ref, onMounted, computed } from "vue";
+import {
+  ChevronLeft,
+  Menu,
+  Bell,
+  Settings,
+  Eye,
+  UserPlus,
+  X,
+  LayoutDashboard,
+  FileText,
+  History,
+  BarChart2,
+  Users,
+  Flame,
+  CheckCircle
+} from "lucide-vue-next";
 import { useFireReportStore } from "@/stores/fireReportStore";
 import { useFirefighterStore } from "@/stores/firefighterStore";
 import { TransitionRoot, TransitionChild, Dialog, DialogPanel, DialogTitle } from '@headlessui/vue'
@@ -247,8 +441,11 @@ const firefighterStore = useFirefighterStore();
 const isSidebarCollapsed = ref(false);
 const selectedReport = ref(null);
 const showAssignModal = ref(false);
-const selectedFirefighter = ref("");
+const selectedFirefighter = ref(null);
 const showSuccessModal = ref(false);
+const selectedImage = ref(null);
+const searchQuery = ref('');
+const statusFilter = ref('All');
 
 const toggleSidebar = () => {
   isSidebarCollapsed.value = !isSidebarCollapsed.value;
@@ -260,6 +457,14 @@ const viewReport = (report) => {
 
 const closeViewModal = () => {
   selectedReport.value = null;
+};
+
+const openImageModal = (imagePath) => {
+  selectedImage.value = imagePath;
+};
+
+const closeImageModal = () => {
+  selectedImage.value = null;
 };
 
 const approveReport = async () => {
@@ -284,7 +489,7 @@ const setReportStatus = async (status) => {
 };
 
 const openAssignModal = (report) => {
-  if (['In Progress', 'Resolved'].includes(report.status)) {
+  if (['Pending', 'In Progress'].includes(report.status)) {
     selectedReport.value = report;
     showAssignModal.value = true;
   }
@@ -292,20 +497,21 @@ const openAssignModal = (report) => {
 
 const closeAssignModal = () => {
   showAssignModal.value = false;
-  selectedFirefighter.value = "";
+  selectedFirefighter.value = null;
 };
 
 const assignFirefighter = async () => {
   if (selectedReport.value && selectedFirefighter.value) {
     try {
-      await fireReportStore.assignFirefighter(selectedReport.value.id, selectedFirefighter.value);
+      await fireReportStore.assignFirefighter(selectedReport.value.id, selectedFirefighter.value.id);
+      await fireReportStore.updateReportStatus(selectedReport.value.id, 'Resolved');
       selectedReport.value.status = 'Resolved';
-      selectedReport.value.assignedTo = selectedFirefighter.value;
+      selectedReport.value.assignedTo = selectedFirefighter.value.fullname;
+      await firefighterStore.updateFirefighterStatus(selectedFirefighter.value.id, 'assigned');
       closeAssignModal();
       showSuccessModal.value = true;
     } catch (error) {
       console.error('Error assigning firefighter:', error);
-      // Handle error (e.g., show an error message to the user)
     }
   }
 };
@@ -327,6 +533,36 @@ const navigationItems = [
   { name: "Fire Analytics", icon: BarChart2, path: "/bfpmap", active: false },
 ];
 
+const availableFirefighters = computed(() => {
+  return firefighterStore.firefighters.filter(firefighter => firefighter.status === 'available');
+});
+
+const filteredAndSortedReports = computed(() => {
+  let filtered = fireReportStore.fireReports;
+
+  // Apply search filter
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase();
+    filtered = filtered.filter(report =>
+      report.id.toLowerCase().includes(query) ||
+      report.incidentType.toLowerCase().includes(query) ||
+      report.location.toLowerCase().includes(query)
+    );
+  }
+
+  // Apply status filter
+  if (statusFilter.value !== 'All') {
+    filtered = filtered.filter(report => report.status === statusFilter.value);
+  }
+
+  // Sort by date (latest first)
+  return filtered.sort((a, b) => b.dateTime.seconds - a.dateTime.seconds);
+});
+
+const setStatusFilter = (status) => {
+  statusFilter.value = status;
+};
+
 onMounted(async () => {
   await fireReportStore.fetchFireReports();
   await firefighterStore.fetchFirefighters();
@@ -343,4 +579,20 @@ onMounted(async () => {
 .fade-leave-to {
   opacity: 0;
 }
+
+.bg-gray-50 {
+  background-color: #F9FAFB;
+}
+
+.shadow {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.rounded-lg {
+  border-radius: 0.5rem;
+}
+.text-002B5B {
+  color: #002B5B;
+}
 </style>
+

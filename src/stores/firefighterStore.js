@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import { db } from '../firebase/config';
+import { db, auth } from '../firebase/config';
 import { 
   collection, 
   query, 
@@ -8,12 +8,16 @@ import {
   getDocs,
   addDoc,
   doc,
+  // getDoc,
   updateDoc,
-  deleteDoc
+  deleteDoc,
+  where
 } from 'firebase/firestore';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 
 export const useFirefighterStore = defineStore('firefighter', () => {
   const firefighters = ref([]);
+  const loggedInFirefighter = ref(null);
 
   // Fetch all firefighters
   const fetchFirefighters = async () => {
@@ -33,10 +37,15 @@ export const useFirefighterStore = defineStore('firefighter', () => {
   // Add new firefighter
   const addFirefighter = async (firefighterData) => {
     try {
+      // Create auth user
+      const userCredential = await createUserWithEmailAndPassword(auth, firefighterData.email, firefighterData.password);
+      const uid = userCredential.user.uid;
+
+      // Add firefighter to Firestore
       const docRef = await addDoc(collection(db, 'firefighters'), {
         ...firefighterData,
+        uid: uid,
         dateJoined: new Date().toISOString(),
-        // Generate Dicebear avatar URL
         photoURL: `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(firefighterData.fullname)}&backgroundColor=random`
       });
       
@@ -94,12 +103,79 @@ export const useFirefighterStore = defineStore('firefighter', () => {
     }
   };
 
+  // Login firefighter
+  const loginFirefighter = async (email, password) => {
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const uid = userCredential.user.uid;
+
+      // Fetch firefighter data from Firestore
+      const q = query(collection(db, 'firefighters'), where('uid', '==', uid));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const firefighterDoc = querySnapshot.docs[0];
+        loggedInFirefighter.value = {
+          id: firefighterDoc.id,
+          ...firefighterDoc.data()
+        };
+        return loggedInFirefighter.value;
+      } else {
+        throw new Error('Firefighter not found');
+      }
+    } catch (error) {
+      console.error('Error logging in firefighter:', error);
+      throw error;
+    }
+  };
+
+  // Logout firefighter
+  const logoutFirefighter = async () => {
+    try {
+      await signOut(auth);
+      loggedInFirefighter.value = null;
+    } catch (error) {
+      console.error('Error logging out firefighter:', error);
+      throw error;
+    }
+  };
+
+  // Get logged in firefighter
+  const getLoggedInFirefighter = () => {
+    return loggedInFirefighter.value;
+  };
+
+  // Fetch firefighter by email
+  const fetchFirefighterByEmail = async (email) => {
+    try {
+      const q = query(collection(db, 'firefighters'), where('email', '==', email));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const firefighterDoc = querySnapshot.docs[0];
+        return {
+          id: firefighterDoc.id,
+          ...firefighterDoc.data()
+        };
+      } else {
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching firefighter by email:', error);
+      throw error;
+    }
+  };
+
   return {
     firefighters,
     fetchFirefighters,
     addFirefighter,
     updateFirefighter,
     updateFirefighterStatus,
-    deleteFirefighter
+    deleteFirefighter,
+    loginFirefighter,
+    logoutFirefighter,
+    getLoggedInFirefighter,
+    fetchFirefighterByEmail
   };
 });

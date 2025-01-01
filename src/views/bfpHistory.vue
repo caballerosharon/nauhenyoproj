@@ -22,7 +22,7 @@
           <li v-for="item in navigationItems" :key="item.name" class="mb-2">
             <a :href="item.path" :class="[
               'flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200',
-              item.active ? 'bg-[#002855] text-white' : 'text-gray-300 hover:bg-[#002855] hover:text-white'
+              item.active ? 'bg-[#f97316] text-white' : 'text-gray-300 hover:bg-[#333333] hover:text-white'
             ]">
               <component :is="item.icon" :class="['h-6 w-6', isSidebarCollapsed ? 'mr-0' : 'mr-3']" />
               <span :class="{ 'hidden': isSidebarCollapsed, 'ml-3': !isSidebarCollapsed }">

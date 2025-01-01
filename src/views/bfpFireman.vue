@@ -22,7 +22,7 @@
           <li v-for="item in navigationItems" :key="item.name" class="mb-2">
             <a :href="item.path" :class="[
               'flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200',
-              item.active ? 'bg-[#002855] text-white' : 'text-gray-300 hover:bg-[#002855] hover:text-white'
+              item.active ? 'bg-[#f97316] text-white' : 'text-gray-300 hover:bg-[#333333] hover:text-white'
             ]">
               <component :is="item.icon" :class="['h-6 w-6', isSidebarCollapsed ? 'mr-0' : 'mr-3']" />
               <span v-if="!isSidebarCollapsed" class="ml-3">
@@ -752,6 +752,7 @@
         </div>
       </Dialog>
     </TransitionRoot>
+
   </div>
 </template>
 
@@ -766,6 +767,7 @@ import {
 import { TransitionRoot, TransitionChild, Dialog, DialogPanel, DialogTitle } from '@headlessui/vue';
 import { useFirefighterStore } from '@/stores/firefighterStore';
 import { useFireReportStore } from '@/stores/fireReportStore';
+import { v4 as uuidv4 } from 'uuid';
 
 const firefighterStore = useFirefighterStore();
 const fireReportStore = useFireReportStore();
@@ -889,10 +891,12 @@ const closeAddModal = () => {
 
 const addFirefighter = async () => {
   try {
-    await firefighterStore.addFirefighter({
+    const newFirefighterWithUID = {
       ...newFirefighter.value,
+      uid: uuidv4(),
       dateJoined: new Date(),
-    });
+    };
+    await firefighterStore.addFirefighter(newFirefighterWithUID);
     closeAddModal();
     successMessage.value = 'Firefighter added successfully!';
     showSuccessModal.value = true;
@@ -1062,3 +1066,4 @@ onMounted(async () => {
   opacity: 0;
 }
 </style>
+

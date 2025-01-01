@@ -121,8 +121,11 @@ import { useRouter } from 'vue-router';
 import { EyeIcon, EyeOffIcon, XIcon } from 'lucide-vue-next';
 import { auth } from '@/firebase/config';
 import { signInWithEmailAndPassword } from 'firebase/auth';
+import { useFirefighterStore } from '@/stores/firefighterStore';
 
 const router = useRouter();
+const firefighterStore = useFirefighterStore();
+
 const form = ref({
   email: '',
   password: ''
@@ -158,11 +161,23 @@ const handleSubmit = async () => {
       const userCredential = await signInWithEmailAndPassword(auth, form.value.email, form.value.password);
       console.log('User logged in:', userCredential.user);
 
+      // Check if the user is a firefighter using the new firefighterStore method
+      const firefighter = await firefighterStore.fetchFirefighterByEmail(form.value.email);
+      
+      if (firefighter) {
+        // User is a firefighter, log them in using the firefighterStore
+        await firefighterStore.loginFirefighter(form.value.email, form.value.password);
+      }
+
       isRedirecting.value = true;
       setTimeout(() => {
         isLoggingIn.value = false;
         isRedirecting.value = false;
-        router.push('/dashboard');
+        if (firefighter) {
+          router.push('/firemanprofile');
+        } else {
+          router.push('/dashboard');
+        }
       }, 2000);
     }
   } catch (err) {
@@ -196,4 +211,3 @@ const goToLandingPage = () => {
   animation: gradient 3s ease infinite;
 }
 </style>
-

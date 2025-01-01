@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-100 text-gray-800 font-poppins relative">
+  <div class="min-h-screen bg-gray-100 text-gray-800 font-poppins relative pb-20">
     <!-- Header -->
     <header class="bg-white shadow-neu-header fixed top-0 w-full z-20">
       <div class="max-w-7xl mx-auto px-4">
@@ -7,35 +7,8 @@
           <!-- Logo -->
           <div class="flex items-center">
             <img src="@/assets/naulogo.png" alt="NauHenyo" class="h-8 w-8" />
+            <h1 class="ml-3 text-xl font-semibold text-gray-800">My Reports</h1>
           </div>
-
-          <!-- Navigation Items -->
-          <nav class="flex-1 flex justify-center space-x-8">
-            <router-link
-              v-for="(item, index) in navItems"
-              :key="index"
-              :to="item.path"
-              class="flex flex-col items-center group px-4"
-            >
-              <div class="flex flex-col items-center">
-                <component 
-                  :is="item.icon" 
-                  class="w-5 h-5 mb-0.5"
-                  :class="$route.path === item.path ? 'text-teal-600' : 'text-gray-600'"
-                />
-                <span 
-                  class="text-xs"
-                  :class="$route.path === item.path ? 'text-teal-600' : 'text-gray-600'"
-                >
-                  {{ item.label }}
-                </span>
-              </div>
-              <div 
-                class="h-0.5 w-full mt-1 transition-all duration-300"
-                :class="$route.path === item.path ? 'bg-teal-600' : 'bg-transparent'"
-              ></div>
-            </router-link>
-          </nav>
 
           <!-- Profile -->
           <div class="flex items-center">
@@ -139,6 +112,32 @@
         </div>
       </div>
     </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-neu-bottom z-50">
+      <div class="max-w-screen-xl mx-auto px-4">
+        <div class="flex justify-between h-16">
+          <router-link
+            v-for="(item, index) in navItems"
+            :key="index"
+            :to="item.path"
+            class="flex flex-col items-center justify-center flex-1 min-w-0 hover:bg-gray-50 transition-all duration-300"
+          >
+            <component 
+              :is="item.icon" 
+              class="w-6 h-6 mb-1"
+              :class="$route.path === item.path ? 'text-teal-600' : 'text-gray-600'"
+            />
+            <span 
+              class="text-xs truncate"
+              :class="$route.path === item.path ? 'text-teal-600' : 'text-gray-600'"
+            >
+              {{ item.label }}
+            </span>
+          </router-link>
+        </div>
+      </div>
+    </nav>
 
     <!-- Modal -->
     <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -386,6 +385,10 @@ watch(() => auth.currentUser, (newUser) => {
 
 .shadow-neu-header {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.shadow-neu-bottom {
+  box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .transition-all {

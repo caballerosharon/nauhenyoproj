@@ -1,58 +1,42 @@
 <template>
-  <div class="min-h-screen bg-gray-100 text-gray-800 font-poppins relative">
-    <!-- Header -->
-    <header class="bg-white shadow-neu-header fixed top-0 w-full z-20">
-      <div class="max-w-7xl mx-auto px-4">
-        <div class="flex items-center justify-between h-16">
-          <!-- Logo -->
+  <div class="min-h-screen bg-gray-100 text-gray-800 font-poppins relative pb-16">
+    <!-- Main Content -->
+    <main class="px-4 md:px-6 lg:px-8 pt-6">
+      <div class="max-w-8xl mx-auto">
+        <!-- Header with Logo -->
+        <div class="flex items-center justify-between mb-6">
           <div class="flex items-center">
-            <img src="@/assets/naulogo.png" alt="NauHenyo" class="h-8 w-8" />
+            <img src="@/assets/naulogo.png" alt="NauHenyo" class="h-10 w-10" />
+            <h1 class="ml-3 text-2xl font-semibold text-gray-800">Dashboard</h1>
           </div>
-
-          <!-- Navigation Items -->
-          <nav class="flex-1 flex justify-center space-x-8">
-            <router-link
-              v-for="(item, index) in navItems"
-              :key="index"
-              :to="item.path"
-              class="flex flex-col items-center group px-4 hover:text-teal-600 transition-colors duration-300"
-            >
-              <div class="flex flex-col items-center">
-                <component 
-                  :is="item.icon" 
-                  class="w-5 h-5 mb-0.5"
-                  :class="$route.path === item.path ? 'text-teal-600' : 'text-gray-600 group-hover:text-teal-600'"
-                />
-                <span 
-                  class="text-xs"
-                  :class="$route.path === item.path ? 'text-teal-600' : 'text-gray-600 group-hover:text-teal-600'"
-                >
-                  {{ item.label }}
-                </span>
-              </div>
-              <div 
-                class="h-0.5 w-full mt-1 transition-all duration-300"
-                :class="$route.path === item.path ? 'bg-teal-600' : 'bg-transparent group-hover:bg-teal-600'"
-              ></div>
-            </router-link>
-          </nav>
-
-          <!-- Profile -->
-          <div class="flex items-center">
-            <router-link
-              to="/profile"
-              class="flex items-center space-x-2 hover:bg-gray-100 p-2 rounded-lg transition-all duration-300"
+          <div class="relative">
+            <button
+              @click="toggleDropdown"
+              class="flex items-center space-x-2 hover:bg-gray-200 p-2 rounded-lg transition-all duration-300"
             >
               <UserCircle class="w-6 h-6 text-gray-600" />
-            </router-link>
+            </button>
+            <div
+              v-if="isDropdownOpen"
+              class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50"
+            >
+              <router-link
+                to="/profile"
+                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                @click="isDropdownOpen = false"
+              >
+                Profile
+              </router-link>
+              <button
+                @click="openLogoutModal"
+                class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              >
+                Log out
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    </header>
 
-    <!-- Main Content -->
-    <main class="pt-20 px-4 md:px-6 lg:px-8">
-      <div class="max-w-8xl mx-auto py-6">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <!-- Left Column -->
           <div class="lg:col-span-2 space-y-6">
@@ -136,14 +120,53 @@
         </div>
       </div>
     </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 shadow-neu-bottom z-50">
+      <div class="max-w-screen-xl mx-auto">
+        <div class="flex justify-between h-16">
+          <router-link
+            v-for="(item, index) in navItems"
+            :key="index"
+            :to="item.path"
+            class="flex flex-col items-center justify-center w-full hover:bg-gray-50 transition-all duration-300"
+            :class="$route.path === item.path ? 'text-teal-600' : 'text-gray-600'"
+          >
+            <component 
+              :is="item.icon" 
+              class="w-6 h-6 mb-1"
+              :class="$route.path === item.path ? 'text-teal-600' : 'text-gray-600'"
+            />
+            <span class="text-xs">{{ item.label }}</span>
+          </router-link>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Logout Modal -->
+    <div v-if="isLogoutModalOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white p-6 rounded-lg shadow-lg">
+        <h2 class="text-xl font-semibold mb-4">Confirm Logout</h2>
+        <p class="mb-6">Are you sure you want to log out?</p>
+        <div class="flex justify-end space-x-4">
+          <button @click="closeLogoutModal" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
+            Cancel
+          </button>
+          <button @click="logout" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import { useReportStore } from '../stores/reportStore';
 import { auth } from '../firebase/config';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { 
   LayoutDashboard, 
   FileText, 
@@ -162,7 +185,34 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearSca
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title);
 
+const router = useRouter();
 const reportStore = useReportStore();
+
+const isDropdownOpen = ref(false);
+const isLogoutModalOpen = ref(false);
+
+const toggleDropdown = () => {
+  isDropdownOpen.value = !isDropdownOpen.value;
+};
+
+const openLogoutModal = () => {
+  isDropdownOpen.value = false;
+  isLogoutModalOpen.value = true;
+};
+
+const closeLogoutModal = () => {
+  isLogoutModalOpen.value = false;
+};
+
+const logout = async () => {
+  try {
+    await signOut(auth);
+    closeLogoutModal();
+    router.push('/login');
+  } catch (error) {
+    console.error('Error logging out:', error);
+  }
+};
 
 const navItems = [
   { path: '/dashboard', icon: LayoutDashboard, label: 'Home' },
@@ -355,10 +405,6 @@ watch(() => auth.currentUser, (newUser) => {
 
 .shadow-neu {
   box-shadow: 8px 8px 16px #d1d9e6, -8px -8px 16px #ffffff;
-}
-
-.shadow-neu-header {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .shadow-neu-bottom {

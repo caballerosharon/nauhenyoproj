@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-100 text-gray-800 font-poppins relative">
+  <div class="min-h-screen bg-gray-100 text-gray-800 font-poppins relative pb-16">
     <!-- Header -->
     <header class="bg-white shadow-neu-header fixed top-0 w-full z-20">
       <div class="max-w-7xl mx-auto px-4">
@@ -7,44 +7,37 @@
           <!-- Logo -->
           <div class="flex items-center">
             <img src="@/assets/naulogo.png" alt="NauHenyo" class="h-8 w-8" />
+            <h1 class="ml-3 text-xl font-semibold text-gray-800">Report Fire</h1>
           </div>
-
-          <!-- Navigation Items -->
-          <nav class="flex-1 flex justify-center space-x-8">
-            <router-link
-              v-for="(item, index) in navItems"
-              :key="index"
-              :to="item.path"
-              class="flex flex-col items-center group px-4"
-            >
-              <div class="flex flex-col items-center">
-                <component 
-                  :is="item.icon" 
-                  class="w-5 h-5 mb-0.5"
-                  :class="$route.path === item.path ? 'text-teal-600' : 'text-gray-600'"
-                />
-                <span 
-                  class="text-xs"
-                  :class="$route.path === item.path ? 'text-teal-600' : 'text-gray-600'"
-                >
-                  {{ item.label }}
-                </span>
-              </div>
-              <div 
-                class="h-0.5 w-full mt-1 transition-all duration-300"
-                :class="$route.path === item.path ? 'bg-teal-600' : 'bg-transparent'"
-              ></div>
-            </router-link>
-          </nav>
 
           <!-- Profile -->
           <div class="flex items-center">
-            <router-link
-              to="/profile"
-              class="flex items-center space-x-2 hover:bg-gray-100 p-2 rounded-lg transition-all duration-300"
-            >
-              <UserCircle class="w-6 h-6 text-gray-600" />
-            </router-link>
+            <div class="relative">
+              <button
+                @click="toggleDropdown"
+                class="flex items-center space-x-2 hover:bg-gray-100 p-2 rounded-lg transition-all duration-300"
+              >
+                <UserCircle class="w-6 h-6 text-gray-600" />
+              </button>
+              <div
+                v-if="isDropdownOpen"
+                class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50"
+              >
+                <router-link
+                  to="/profile"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  @click="isDropdownOpen = false"
+                >
+                  Profile
+                </router-link>
+                <button
+                  @click="openLogoutModal"
+                  class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Log out
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -187,7 +180,7 @@
             </div>
           </div>
 
-          <!-- Right Panel - Fire Safety Tips -->
+          <!-- Right Panel - Crime Safety Tips -->
           <div class="bg-white rounded-lg shadow-neu overflow-hidden">
             <div class="p-6 space-y-6">
               <!-- Header -->
@@ -197,7 +190,7 @@
                   <span class="block text-xl text-teal-600">SAFETY TIPS</span>
                 </h2>
               </div>
-
+  
               <!-- Tips Grid -->
               <div class="grid grid-cols-2 gap-4 mt-8">
                 <div v-for="(tip, index) in safetyTips" :key="index"
@@ -211,13 +204,35 @@
 
               <!-- Footer -->
               <div class="mt-6 text-center">
-                <p class="text-xs text-gray-500">For more information visit www.firesafety.com</p>
+                <p class="text-xs text-gray-500">For more information visit wwW.firesafety.com</p>
               </div>
             </div>
           </div>
         </div>
       </form>
     </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="fixed bottom-0 w-full bg-white border-t border-gray-200 shadow-neu-bottom z-50">
+      <div class="max-w-screen-xl mx-auto">
+        <div class="flex justify-between h-16">
+          <router-link
+            v-for="(item, index) in navItems"
+            :key="index"
+            :to="item.path"
+            class="flex flex-col items-center justify-center w-full hover:bg-gray-50 transition-all duration-300"
+            :class="$route.path === item.path ? 'text-teal-600' : 'text-gray-600'"
+          >
+            <component 
+              :is="item.icon" 
+              class="w-6 h-6 mb-1"
+              :class="$route.path === item.path ? 'text-teal-600' : 'text-gray-600'"
+            />
+            <span class="text-xs">{{ item.label }}</span>
+          </router-link>
+        </div>
+      </div>
+    </nav>
 
     <!-- Success Modal -->
     <Transition enter-active-class="ease-out duration-300" 
@@ -250,14 +265,31 @@
         </div>
       </div>
     </Transition>
+
+    <!-- Logout Modal -->
+    <div v-if="isLogoutModalOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white p-6 rounded-lg shadow-lg">
+        <h2 class="text-xl font-semibold mb-4">Confirm Logout</h2>
+        <p class="mb-6">Are you sure you want to log out?</p>
+        <div class="flex justify-end space-x-4">
+          <button @click="closeLogoutModal" class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
+            Cancel
+          </button>
+          <button @click="logout" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
+            Logout
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useFireReportStore } from '@/stores/fireReportStore';
 import { auth } from '../firebase/config';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { 
   LayoutDashboard, 
   FileText, 
@@ -276,7 +308,9 @@ import {
   Fuel,
   ShieldAlert
 } from 'lucide-vue-next';
+import axios from 'axios';
 
+const router = useRouter();
 const fireReportStore = useFireReportStore();
 
 const categories = ['Building Fire Incidents', 'Vehicle Fire', 'Wildland or Vegetation Fires', 'Electrical Fire'];
@@ -342,6 +376,8 @@ const previewImages = ref([]);
 const showModal = ref(false);
 const latitude = ref(null);
 const longitude = ref(null);
+const isDropdownOpen = ref(false);
+const isLogoutModalOpen = ref(false);
 
 const filteredSubCategories = computed(() => {
   return incidentType.value ? subCategories[incidentType.value] : [];
@@ -359,19 +395,35 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-const handleFileUpload = (event) => {
+const handleFileUpload = async (event) => {
   const newFiles = Array.from(event.target.files);
   files.value = [...files.value, ...newFiles];
   
-  newFiles.forEach(file => {
+  for (const file of newFiles) {
     if (previewImages.value.length < 4) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        previewImages.value.push(e.target.result);
-      };
-      reader.readAsDataURL(file);
+      try {
+        const formData = new FormData();
+        formData.append('image', file);
+        
+        const response = await axios.post('http://localhost:3000/api/upload', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        
+        if (response.data && response.data.path) {
+          const imagePath = response.data.path;
+          previewImages.value.push(imagePath);
+        } else {
+          console.error('Invalid response from server:', response);
+          throw new Error('Invalid server response');
+        }
+      } catch (error) {
+        console.error('Error uploading image:', error);
+        // You might want to show an error message to the user here
+      }
     }
-  });
+  }
 };
 
 const removeImage = (index) => {
@@ -406,7 +458,8 @@ const submitReport = async () => {
       latitude: latitude.value,
       longitude: longitude.value
     },
-    status: 'Pending'
+    status: 'Pending',
+    imagePaths: previewImages.value // Store the image paths in Firestore
   };
 
   try {
@@ -438,6 +491,29 @@ const closeModal = () => {
   showModal.value = false;
 };
 
+const toggleDropdown = () => {
+  isDropdownOpen.value = !isDropdownOpen.value;
+};
+
+const openLogoutModal = () => {
+  isDropdownOpen.value = false;
+  isLogoutModalOpen.value = true;
+};
+
+const closeLogoutModal = () => {
+  isLogoutModalOpen.value = false;
+};
+
+const logout = async () => {
+  try {
+    await signOut(auth);
+    closeLogoutModal();
+    router.push('/login');
+  } catch (error) {
+    console.error('Error logging out:', error);
+  }
+};
+
 const initializeMap = () => {
   const input = locationInput.value;
   const mapContainer = map.value;
@@ -447,7 +523,7 @@ const initializeMap = () => {
     center: { lat: -34.397, lng: 150.644 },
     zoom: 8
   });
-  
+
   autocomplete.addListener('place_changed', () => {
     const place = autocomplete.getPlace();
     if (place.geometry) {
